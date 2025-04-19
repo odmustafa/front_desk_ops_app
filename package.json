@@ -1,0 +1,38 @@
+{
+  "name": "front_desk_ops_app",
+  "version": "1.0.0",
+  "description": "Front Desk Operations Application for Tribute Music Gallery",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "electron-builder"
+  },
+  "keywords": [
+    "membership",
+    "check-in",
+    "front-desk",
+    "operations"
+  ],
+  "author": "Tribute Music Gallery",
+  "license": "ISC",
+  "dependencies": {
+    "sqlite3": "^5.1.6",
+    "mssql": "^10.0.1",
+    "csv-parse": "^5.5.0",
+    "axios": "^1.6.7"
+  },
+  "build": {
+    "appId": "com.tributegallery.frontdeskops",
+    "productName": "Front Desk Ops",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "mac": {
+      "target": "dmg"
+    }
+  }
+}
