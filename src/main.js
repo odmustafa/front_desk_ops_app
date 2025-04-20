@@ -26,17 +26,18 @@ function createWindow() {
     }
   });
   
-  // Set Content Security Policy
+  // Set Content Security Policy that allows Bootstrap to work properly
   mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
     callback({
       responseHeaders: {
         ...details.responseHeaders,
         'Content-Security-Policy': [
-          "default-src 'self';",
-          "script-src 'self' 'unsafe-inline';",
-          "style-src 'self' 'unsafe-inline';",
+          "default-src 'self' https://cdn.jsdelivr.net;",
+          "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;",
+          "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;",
           "img-src 'self' data:;",
-          "font-src 'self';"
+          "font-src 'self' https://cdn.jsdelivr.net;",
+          "connect-src 'self';"
         ].join(' ')
       }
     });

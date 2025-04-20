@@ -14,15 +14,10 @@ let alertModalConfirm;
 // Initialize Bootstrap components when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
   // Initialize Bootstrap components
-  const alertModalElement = document.getElementById('alert-modal');
-  if (alertModalElement) {
-    alertModal = new bootstrap.Modal(alertModalElement);
-    alertModalTitle = document.getElementById('alert-modal-title');
-    alertModalBody = document.getElementById('alert-modal-body');
-    alertModalConfirm = document.getElementById('alert-modal-confirm');
-  } else {
-    console.warn('Alert modal element not found');
-  }
+  alertModal = new bootstrap.Modal(document.getElementById('alert-modal'));
+  alertModalTitle = document.getElementById('alert-modal-title');
+  alertModalBody = document.getElementById('alert-modal-body');
+  alertModalConfirm = document.getElementById('alert-modal-confirm');
   
   // Set up navigation
   setupNavigation();
