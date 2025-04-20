@@ -418,16 +418,52 @@ ipcMain.handle('db:addCheckIn', async (event, checkIn) => {
 
 // These handlers are already defined above
 
+// Helper function to load settings
+function loadSettings() {
+  let settings = {};
+  try {
+    // Try to load from settings file
+    const settingsPath = path.join(app.getPath('userData'), 'settings.json');
+    if (fs.existsSync(settingsPath)) {
+      const settingsData = fs.readFileSync(settingsPath, 'utf8');
+      settings = JSON.parse(settingsData);
+      logger.debug('Settings loaded from file', { path: settingsPath });
+    } else {
+      // If settings file doesn't exist, try to load from default location
+      const defaultSettingsPath = path.join(__dirname, 'config', 'settings.json');
+      if (fs.existsSync(defaultSettingsPath)) {
+        const settingsData = fs.readFileSync(defaultSettingsPath, 'utf8');
+        settings = JSON.parse(settingsData);
+        logger.debug('Settings loaded from default file', { path: defaultSettingsPath });
+      } else {
+        logger.warn('No settings file found');
+      }
+    }
+  } catch (err) {
+    logger.error('Error loading settings', { error: err.message });
+  }
+  return settings;
+}
+
 // Connection Status Handlers
 ipcMain.handle('wix:checkConnection', async () => {
   logger.debug('Checking Wix connection');
   try {
-    // Simulate Wix connection check
-    // In a real implementation, this would make an API call to Wix
-    const connected = true; // For demo purposes
+    // Check if Wix API key is configured
+    const settings = loadSettings();
     
-    logger.info('Wix connection status', { connected });
-    return { success: connected };
+    const wixApiKey = settings.wixApiKey || '';
+    if (!wixApiKey) {
+      logger.warn('Wix API key not configured');
+      return { success: false, error: 'API key not configured' };
+    }
+    
+    // In a real implementation, we would make an API call to Wix
+    // For now, we'll check if the API key exists and is valid format
+    const isValidFormat = wixApiKey.length > 10;
+    
+    logger.info('Wix connection status', { connected: isValidFormat });
+    return { success: isValidFormat };
   } catch (error) {
     logger.error('Error checking Wix connection', { error: error.message });
     return { success: false, error: error.message };
@@ -437,12 +473,19 @@ ipcMain.handle('wix:checkConnection', async () => {
 ipcMain.handle('timeXpress:checkConnection', async () => {
   logger.debug('Checking TimeXpress connection');
   try {
-    // Simulate TimeXpress connection check
-    // In a real implementation, this would try to connect to TimeXpress
-    const connected = Math.random() > 0.3; // Randomly fail sometimes for demo
+    // Check if TimeXpress path is configured
+    const settings = loadSettings();
+    const timeXpressPath = settings.timeClockDb || '';
+    if (!timeXpressPath) {
+      logger.warn('TimeXpress path not configured');
+      return { success: false, error: 'Path not configured' };
+    }
     
-    logger.info('TimeXpress connection status', { connected });
-    return { success: connected };
+    // Check if the file exists
+    const exists = fs.existsSync(timeXpressPath);
+    
+    logger.info('TimeXpress connection status', { connected: exists });
+    return { success: exists };
   } catch (error) {
     logger.error('Error checking TimeXpress connection', { error: error.message });
     return { success: false, error: error.message };
@@ -452,12 +495,19 @@ ipcMain.handle('timeXpress:checkConnection', async () => {
 ipcMain.handle('scanID:checkConnection', async () => {
   logger.debug('Checking Scan-ID connection');
   try {
-    // Simulate Scan-ID connection check
-    // In a real implementation, this would try to connect to the Scan-ID device
-    const connected = Math.random() > 0.5; // Randomly fail sometimes for demo
+    // Check if Scan-ID path is configured
+    const settings = loadSettings();
+    const scanIDPath = settings.scanIdPath || '';
+    if (!scanIDPath) {
+      logger.warn('Scan-ID path not configured');
+      return { success: false, error: 'Path not configured' };
+    }
     
-    logger.info('Scan-ID connection status', { connected });
-    return { success: connected };
+    // Check if the device/path exists
+    const exists = fs.existsSync(scanIDPath);
+    
+    logger.info('Scan-ID connection status', { connected: exists });
+    return { success: exists };
   } catch (error) {
     logger.error('Error checking Scan-ID connection', { error: error.message });
     return { success: false, error: error.message };
