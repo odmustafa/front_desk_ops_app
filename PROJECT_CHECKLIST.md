@@ -56,22 +56,22 @@
   - [ ] Time clock integration
   - [ ] Staff directory
 
-- [ ] Knowledge Base
-  - [ ] Employee handbook access
-  - [ ] Emergency procedures documentation
-  - [ ] FAQ system for staff
-  - [ ] Document search functionality
+- [x] Knowledge Base
+  - [x] Employee handbook access
+  - [x] Emergency procedures documentation
+  - [x] FAQ system for staff
+  - [x] Document search functionality
 
-- [ ] Incident Reporting
-  - [ ] Incident report form
-  - [ ] Report submission and storage
-  - [ ] Report review workflow
-  - [ ] Notification system
+- [x] Incident Reporting
+  - [x] Incident report form
+  - [x] Report submission and storage
+  - [x] Report review workflow
+  - [x] Notification system
 
-- [ ] Announcements System
-  - [ ] Management announcements creation
-  - [ ] Announcement display
-  - [ ] Notification system
+- [x] Announcements System
+  - [x] Management announcements creation
+  - [x] Announcement display
+  - [x] Notification system
 
 ## Database Components
 - [ ] Member database
