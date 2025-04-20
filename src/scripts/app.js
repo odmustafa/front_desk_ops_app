@@ -6,10 +6,25 @@
 // DOM Elements
 const navLinks = document.querySelectorAll('.nav-link');
 const contentPages = document.querySelectorAll('.content-page');
-const alertModal = new bootstrap.Modal(document.getElementById('alert-modal'));
-const alertModalTitle = document.getElementById('alert-modal-title');
-const alertModalBody = document.getElementById('alert-modal-body');
-const alertModalConfirm = document.getElementById('alert-modal-confirm');
+let alertModal;
+let alertModalTitle;
+let alertModalBody;
+let alertModalConfirm;
+
+// Initialize Bootstrap components when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+  // Initialize Bootstrap components
+  alertModal = new bootstrap.Modal(document.getElementById('alert-modal'));
+  alertModalTitle = document.getElementById('alert-modal-title');
+  alertModalBody = document.getElementById('alert-modal-body');
+  alertModalConfirm = document.getElementById('alert-modal-confirm');
+  
+  // Set up navigation
+  setupNavigation();
+  
+  // Initialize dashboard
+  initializeDashboard();
+});
 
 // Application State
 const appState = {
@@ -138,13 +153,13 @@ function navigateToPage(pageName) {
       loadStaffData();
       break;
     case 'knowledge-base':
-      loadKnowledgeBase();
+      // Knowledge base is handled by its own module
       break;
     case 'incidents':
-      loadIncidentReports();
+      // Incidents are handled by their own module
       break;
     case 'announcements':
-      loadAnnouncements();
+      // Announcements are handled by their own module
       break;
     case 'settings':
       // Settings are loaded on app init
@@ -277,143 +292,13 @@ function showConfirmDialog(title, message, onConfirm) {
   alertModal.show();
 }
 
-// --- Knowledge Base ---
-import { getKnowledgeBaseArticles, addKnowledgeBaseArticle } from './knowledge-base.js';
-
-function renderKnowledgeBase(articles) {
-  const kbContent = document.getElementById('kb-content');
-  if (!kbContent) return;
-  if (!articles || articles.length === 0) {
-    kbContent.innerHTML = '<p class="text-center text-muted">No articles found.</p>';
-    return;
-  }
-  kbContent.innerHTML = '';
-  articles.forEach(article => {
-    const div = document.createElement('div');
-    div.className = 'kb-article';
-    div.innerHTML = `<h5>${article.title}</h5><div>${article.content}</div><hr>`;
-    kbContent.appendChild(div);
-  });
-}
-
-async function loadKnowledgeBase() {
-  const articles = await getKnowledgeBaseArticles();
-  renderKnowledgeBase(articles);
-}
-
-function setupKnowledgeBaseForm() {
-  // If you add a form for KB articles, wire it up here
-}
-
-document.addEventListener('DOMContentLoaded', setupKnowledgeBaseForm);
-
-// --- Incidents ---
-import { getIncidentReports, addIncidentReport } from './incidents.js';
-
-function renderIncidentList(reports) {
-  const incidentList = document.getElementById('incident-list');
-  if (!incidentList) return;
-  if (!reports || reports.length === 0) {
-    incidentList.innerHTML = '<div class="list-group-item">No incidents reported yet.</div>';
-    return;
-  }
-  incidentList.innerHTML = '';
-  reports.forEach(report => {
-    const item = document.createElement('div');
-    item.className = 'list-group-item';
-    item.innerHTML = `<strong>${report.reported_by || 'Unknown'}</strong> - ${report.description}<br><small>${report.created_at}</small>`;
-    incidentList.appendChild(item);
-  });
-}
-
-async function loadIncidentReports() {
-  const reports = await getIncidentReports();
-  renderIncidentList(reports);
-}
-
-function setupIncidentForm() {
-  const form = document.getElementById('incident-form');
-  if (!form) return;
-  form.onsubmit = async (e) => {
-    e.preventDefault();
-    const report = {
-      reported_by: document.getElementById('incident-reporter').value,
-      description: document.getElementById('incident-description').value,
-      status: 'open',
-    };
-    await addIncidentReport(report);
-    form.reset();
-    loadIncidentReports();
-    window.app.showAlert('Success', 'Incident report submitted.');
-  };
-}
-
-document.addEventListener('DOMContentLoaded', setupIncidentForm);
-
-// --- Announcements ---
-import { getAnnouncements, addAnnouncement } from './announcements.js';
-
-function renderAnnouncements(announcements) {
-  const allAnnouncements = document.getElementById('all-announcements');
-  if (!allAnnouncements) return;
-  if (!announcements || announcements.length === 0) {
-    allAnnouncements.innerHTML = '<div class="announcement">No announcements yet.</div>';
-    return;
-  }
-  allAnnouncements.innerHTML = '';
-  announcements.forEach(a => {
-    const div = document.createElement('div');
-    div.className = `announcement ${a.priority || ''}`;
-    div.innerHTML = `<div class="announcement-title">${a.title}</div><div class="announcement-content">${a.content}</div><div class="announcement-date">Posted: ${new Date(a.created_at).toLocaleDateString()}</div>`;
-    allAnnouncements.appendChild(div);
-  });
-}
-
-async function loadAnnouncements() {
-  const announcements = await getAnnouncements();
-  renderAnnouncements(announcements);
-}
-
-function setupAnnouncementForm() {
-  const form = document.getElementById('announcement-form');
-  if (!form) return;
-  form.onsubmit = async (e) => {
-    e.preventDefault();
-    const announcement = {
-      title: document.getElementById('announcement-title').value,
-      content: document.getElementById('announcement-content').value,
-      priority: document.getElementById('announcement-priority').value,
-    };
-    await addAnnouncement(announcement);
-    form.reset();
-    loadAnnouncements();
-    window.app.showAlert('Success', 'Announcement posted.');
-  };
-}
-
-document.addEventListener('DOMContentLoaded', setupAnnouncementForm);
-
-// --- Theme Toggle ---
-function setTheme(theme) {
-  const html = document.documentElement;
-  if (theme === 'light') {
-    html.classList.add('light-theme');
-  } else {
-    html.classList.remove('light-theme');
-  }
-  localStorage.setItem('theme', theme);
-}
-
-function toggleTheme() {
-  const html = document.documentElement;
-  const isLight = html.classList.toggle('light-theme');
-  localStorage.setItem('theme', isLight ? 'light' : 'dark');
-}
-
+/**
+ * Ensure dark theme is always used
+ */
 document.addEventListener('DOMContentLoaded', () => {
-  const savedTheme = localStorage.getItem('theme');
-  if (savedTheme === 'light') setTheme('light');
-  document.getElementById('theme-toggle-btn')?.addEventListener('click', toggleTheme);
+  // Force dark theme
+  document.documentElement.classList.remove('light-theme');
+  localStorage.setItem('theme', 'dark');
 });
 
 // Export functions for use in other modules

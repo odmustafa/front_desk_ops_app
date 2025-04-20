@@ -40,7 +40,6 @@
           <i class="bi bi-gear"></i> Settings
         </a>
       </nav>
-      <button id="theme-toggle-btn" class="theme-toggle">Toggle Theme</button>
       <div class="staff-info">
         <img src="assets/placeholder-profile.png" alt="Staff Photo" class="staff-photo">
         <p class="staff-name">Staff Name</p>
@@ -379,6 +378,8 @@
                         <option value="security">Security Issue</option>
                         <option value="facility">Facility Problem</option>
                         <option value="member">Member Complaint</option>
+                        <option value="technology">Technology Issue</option>
+                        <option value="breach">Breach of Peace</option>
                         <option value="other">Other</option>
                       </select>
                     </div>
@@ -469,9 +470,28 @@
                 </div>
                 <div class="card-body">
                   <form id="app-settings-form">
-                    <div class="form-group">
-                      <label for="wix-api-key">Wix API Key</label>
-                      <input type="password" class="form-control" id="wix-api-key">
+                    <div class="card mb-3">
+                      <div class="card-header bg-primary text-white">
+                        <h6 class="mb-0">Wix Integration</h6>
+                      </div>
+                      <div class="card-body">
+                        <div class="form-group">
+                          <label for="wix-site-id">Wix Site ID</label>
+                          <input type="text" class="form-control" id="wix-site-id" placeholder="Enter your Wix site ID">
+                        </div>
+                        <div class="form-group mt-2">
+                          <label for="wix-api-key">Wix API Key</label>
+                          <input type="password" class="form-control" id="wix-api-key" placeholder="Enter your Wix API key">
+                        </div>
+                        <div class="form-group mt-2">
+                          <label for="wix-api-secret">Wix API Secret</label>
+                          <input type="password" class="form-control" id="wix-api-secret" placeholder="Enter your Wix API secret">
+                        </div>
+                        <div class="mt-2">
+                          <button type="button" class="btn btn-outline-primary btn-sm" id="test-wix-connection">Test Connection</button>
+                          <span id="wix-connection-status" class="ms-2"></span>
+                        </div>
+                      </div>
                     </div>
                     <div class="form-group mt-2">
                       <label for="owncast-url">Owncast Server URL</label>
@@ -564,5 +584,7 @@
   <script src="scripts/knowledge-base.js"></script>
   <script src="scripts/incidents.js"></script>
   <script src="scripts/announcements.js"></script>
+  <script src="scripts/wix-settings.js"></script>
+  <script src="scripts/member-check-in.js"></script>
 </body>
 </html>
