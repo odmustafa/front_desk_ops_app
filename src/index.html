@@ -116,6 +116,38 @@
         <!-- Check-In Page -->
         <div id="check-in" class="content-page">
           <h2>Member Check-In</h2>
+          
+          <!-- Member Search Section -->
+          <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+              <h5 class="mb-0">Search Members</h5>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-8">
+                  <div class="input-group mb-3">
+                    <input type="text" id="member-search" class="form-control" placeholder="Search by name, email, or phone..." aria-label="Search members">
+                    <button class="btn btn-primary" type="button" id="member-search-btn">
+                      <i class="bi bi-search"></i> Search
+                    </button>
+                  </div>
+                </div>
+                <div class="col-md-4 d-flex align-items-center">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="" id="search-local-only">
+                    <label class="form-check-label" for="search-local-only">
+                      Search local cache only
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div id="member-search-results" class="mt-3 search-results-container"></div>
+              <div class="text-center mt-2 mb-2">
+                <small class="text-muted">Search for members by name, email, or phone number</small>
+              </div>
+            </div>
+          </div>
+          
           <div class="row">
             <div class="col-md-6">
               <div class="card">

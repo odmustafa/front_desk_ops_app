@@ -271,6 +271,36 @@ h2 {
   cursor: pointer;
 }
 
+/* Member search styles */
+.search-results-container {
+  min-height: 50px;
+  max-height: 300px;
+  overflow-y: auto;
+  border-radius: 0.25rem;
+  transition: all 0.3s ease;
+}
+
+.search-results-container:empty {
+  display: none;
+}
+
+.search-results-container .list-group-item {
+  border-left: 3px solid transparent;
+  transition: all 0.2s ease;
+  background-color: var(--card-bg);
+  color: var(--text-color);
+}
+
+.search-results-container .list-group-item:hover {
+  border-left: 3px solid var(--primary-color);
+  background-color: rgba(255, 59, 59, 0.05);
+}
+
+.search-results-container .list-group-item.active {
+  background-color: rgba(255, 59, 59, 0.1);
+  border-left: 3px solid var(--primary-color);
+}
+
 /* Add your custom styles here */
 
 .logo-white {

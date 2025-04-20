@@ -1,5 +1,6 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
+const fs = require('fs');
 
 // Keep a global reference of the window object to prevent garbage collection
 let mainWindow;
@@ -53,11 +54,171 @@ app.on('activate', () => {
 // IPC handlers for communication between main and renderer processes
 // These will handle various integrations with external systems
 
-// Wix API integration
-ipcMain.handle('wix-get-member', async (event, memberData) => {
-  // TODO: Implement Wix API integration to fetch member data
-  console.log('Fetching member data from Wix:', memberData);
-  return { status: 'pending', message: 'Wix integration pending implementation' };
+// Import configuration and Wix integration module
+let config;
+try {
+  config = require('../config');
+  console.log('Configuration loaded successfully');
+} catch (error) {
+  console.warn('Could not load config.js file. Using default configuration.');
+  config = {
+    wix: {
+      siteId: '',
+      apiKey: '',
+      apiSecret: ''
+    }
+  };
+}
+
+const wixIntegration = require('./database/wix-integration');
+
+// Wix API integration handlers
+ipcMain.handle('wix:initConfig', async (event, credentials) => {
+  try {
+    // Use provided credentials or fall back to config file
+    const wixCredentials = credentials || config.wix;
+    const wixConfig = await wixIntegration.initWixConfig(wixCredentials);
+    return { success: true, config: wixConfig };
+  } catch (error) {
+    console.error('Error initializing Wix config:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Initialize Wix integration with config file credentials on startup
+if (config.wix && config.wix.siteId && config.wix.apiKey) {
+  try {
+    wixIntegration.initWixConfig(config.wix);
+    console.log('Wix integration initialized with config file credentials');
+  } catch (error) {
+    console.error('Failed to initialize Wix integration with config file:', error);
+  }
+}
+
+// Handler to save configuration to config.js file
+ipcMain.handle('saveConfig', async (event, newConfig) => {
+  try {
+    // Merge with existing config
+    const updatedConfig = { ...config, ...newConfig };
+    
+    // Format as JavaScript module
+    const configContent = `/**
+ * Configuration file for Front Desk Ops App
+ * This file contains sensitive information and should not be committed to version control
+ */
+
+module.exports = ${JSON.stringify(updatedConfig, null, 2)};`;
+    
+    // Write to config.js file
+    const configPath = path.join(__dirname, '../config.js');
+    fs.writeFileSync(configPath, configContent, 'utf8');
+    
+    // Update in-memory config
+    config = updatedConfig;
+    
+    console.log('Configuration saved successfully');
+    return { success: true };
+  } catch (error) {
+    console.error('Error saving configuration:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('wix:testConnection', async () => {
+  try {
+    const result = await wixIntegration.testWixConnection();
+    return { success: true, connected: result };
+  } catch (error) {
+    console.error('Error testing Wix connection:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('wix:getMembers', async (event, filters) => {
+  try {
+    const members = await wixIntegration.getWixMembers(filters);
+    return { success: true, members };
+  } catch (error) {
+    console.error('Error fetching Wix members:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('wix:searchMembers', async (event, searchTerm) => {
+  try {
+    const members = await wixIntegration.searchWixMembers(searchTerm);
+    return { success: true, members };
+  } catch (error) {
+    console.error('Error searching Wix members:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('wix:getMember', async (event, memberId) => {
+  try {
+    // First try to get from local database cache
+    let member = await db.getMemberById(memberId);
+    
+    // If not in cache, get from Wix API
+    if (!member) {
+      // Use a filter to get a specific member by ID
+      const members = await wixIntegration.getWixMembers({ memberId });
+      member = members && members.length > 0 ? members[0] : null;
+      
+      if (!member) {
+        throw new Error(`Member with ID ${memberId} not found`);
+      }
+      
+      // Cache the member for future use
+      await db.cacheMember(member);
+    }
+    
+    return { success: true, member };
+  } catch (error) {
+    console.error(`Error getting member ${memberId}:`, error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Database handlers
+ipcMain.handle('db:getCachedMembers', async (event, searchTerm) => {
+  try {
+    const members = await db.searchMembers(searchTerm);
+    return members || [];
+  } catch (error) {
+    console.error('Error searching cached members:', error);
+    return [];
+  }
+});
+
+ipcMain.handle('db:cacheMember', async (event, member) => {
+  try {
+    await db.cacheMember(member);
+    return { success: true };
+  } catch (error) {
+    console.error('Error caching member:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('db:getRecentCheckIns', async (event, limit) => {
+  try {
+    const checkIns = await db.getRecentCheckIns(limit);
+    return checkIns;
+  } catch (error) {
+    console.error('Error getting recent check-ins:', error);
+    return [];
+  }
+});
+
+ipcMain.handle('wix:getEvents', async (event, limit) => {
+  try {
+    const events = await wixIntegration.getWixEvents(limit);
+    return { success: true, events };
+  } catch (error) {
+    console.error('Error fetching Wix events:', error);
+    return { success: false, error: error.message };
+  }
 });
 
 // ID Scanner integration
@@ -81,18 +242,19 @@ ipcMain.handle('owncast-status', async (event) => {
   return { status: 'pending', message: 'Owncast integration pending implementation' };
 });
 
-// --- DATABASE IPC HANDLERS ---
-const { db } = require('./database/db');
+// --- DATABASE ---
+// Note: Database module is already imported at the top of the file
 
 // Knowledge Base
 ipcMain.handle('db:getKnowledgeBaseArticles', async () => {
   return new Promise((resolve, reject) => {
-    db.all('SELECT * FROM knowledge_base ORDER BY created_at DESC', [], (err, rows) => {
+    db.db.all('SELECT * FROM knowledge_base ORDER BY created_at DESC', (err, rows) => {
       if (err) reject(err);
       else resolve(rows);
     });
   });
 });
+
 ipcMain.handle('db:addKnowledgeBaseArticle', async (event, article) => {
   return new Promise((resolve, reject) => {
     db.run('INSERT INTO knowledge_base (title, content, category) VALUES (?, ?, ?)', [article.title, article.content, article.category], function(err) {
@@ -101,6 +263,26 @@ ipcMain.handle('db:addKnowledgeBaseArticle', async (event, article) => {
     });
   });
 });
+
+// Member Check-ins
+ipcMain.handle('db:addCheckIn', async (event, checkIn) => {
+  return new Promise((resolve, reject) => {
+    db.run(
+      'INSERT INTO check_ins (member_id, member_name, purpose, notes) VALUES (?, ?, ?, ?)',
+      [checkIn.memberId, checkIn.memberName || 'Unknown', checkIn.purpose, checkIn.notes],
+      function(err) {
+        if (err) reject(err);
+        else resolve({ success: true, id: this.lastID });
+      }
+    );
+  });
+});
+
+// Note: db:getRecentCheckIns handler is already defined above
+
+// Note: db:cacheMember handler is already defined above
+
+// Note: db:getCachedMembers handler is already defined above
 
 // Incidents
 ipcMain.handle('db:getIncidentReports', async () => {
