@@ -5,6 +5,9 @@ const fs = require('fs');
 // Import logger
 const logger = require('./utils/logger');
 
+// Import database
+const db = require('./database/db');
+
 // Log application start
 logger.info('Application starting', { version: app.getVersion(), platform: process.platform });
 
@@ -290,75 +293,127 @@ ipcMain.handle('owncast-status', async (event) => {
 
 // Knowledge Base
 ipcMain.handle('db:getKnowledgeBaseArticles', async () => {
+  logger.debug('Getting knowledge base articles');
   return new Promise((resolve, reject) => {
     db.db.all('SELECT * FROM knowledge_base ORDER BY created_at DESC', (err, rows) => {
-      if (err) reject(err);
-      else resolve(rows);
+      if (err) {
+        logger.error('Error getting knowledge base articles', { error: err.message });
+        reject(err);
+      } else {
+        logger.debug('Retrieved knowledge base articles', { count: rows.length });
+        resolve(rows || []);
+      }
     });
   });
 });
 
 ipcMain.handle('db:addKnowledgeBaseArticle', async (event, article) => {
+  logger.debug('Adding knowledge base article', { title: article.title });
   return new Promise((resolve, reject) => {
-    db.run('INSERT INTO knowledge_base (title, content, category) VALUES (?, ?, ?)', [article.title, article.content, article.category], function(err) {
-      if (err) reject(err);
-      else resolve({ success: true, id: this.lastID });
+    db.db.run('INSERT INTO knowledge_base (title, content, category) VALUES (?, ?, ?)', 
+      [article.title, article.content, article.category], 
+      function(err) {
+        if (err) {
+          logger.error('Error adding knowledge base article', { error: err.message });
+          reject(err);
+        } else {
+          logger.info('Added knowledge base article', { id: this.lastID, title: article.title });
+          resolve({ success: true, id: this.lastID });
+        }
     });
   });
 });
 
-// Member Check-ins
-ipcMain.handle('db:addCheckIn', async (event, checkIn) => {
-  return new Promise((resolve, reject) => {
-    db.run(
-      'INSERT INTO check_ins (member_id, member_name, purpose, notes) VALUES (?, ?, ?, ?)',
-      [checkIn.memberId, checkIn.memberName || 'Unknown', checkIn.purpose, checkIn.notes],
-      function(err) {
-        if (err) reject(err);
-        else resolve({ success: true, id: this.lastID });
-      }
-    );
-  });
-});
-
-// Note: db:getRecentCheckIns handler is already defined above
-
-// Note: db:cacheMember handler is already defined above
 
 // Note: db:getCachedMembers handler is already defined above
 
 // Incidents
 ipcMain.handle('db:getIncidentReports', async () => {
+  logger.debug('Getting incident reports');
   return new Promise((resolve, reject) => {
-    db.all('SELECT * FROM incidents ORDER BY created_at DESC', [], (err, rows) => {
-      if (err) reject(err);
-      else resolve(rows);
+    db.db.all('SELECT * FROM incidents ORDER BY created_at DESC', (err, rows) => {
+      if (err) {
+        logger.error('Error getting incident reports', { error: err.message });
+        reject(err);
+      } else {
+        logger.debug('Retrieved incident reports', { count: rows.length });
+        resolve(rows || []);
+      }
     });
   });
 });
+
 ipcMain.handle('db:addIncidentReport', async (event, report) => {
+  logger.debug('Adding incident report', { reporter: report.reported_by });
   return new Promise((resolve, reject) => {
-    db.run('INSERT INTO incidents (reported_by, description, status) VALUES (?, ?, ?)', [report.reported_by, report.description, report.status || 'open'], function(err) {
-      if (err) reject(err);
-      else resolve({ success: true, id: this.lastID });
+    db.db.run(`INSERT INTO incidents 
+      (reported_by, description, location, incident_type, incident_date, incident_time, action_taken, status) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, 
+      [report.reported_by, report.description, report.location, report.incident_type, 
+       report.incident_date, report.incident_time, report.action_taken, report.status], 
+      function(err) {
+        if (err) {
+          logger.error('Error adding incident report', { error: err.message });
+          reject(err);
+        } else {
+          logger.info('Added incident report', { id: this.lastID, reporter: report.reported_by });
+          resolve({ success: true, id: this.lastID });
+        }
     });
   });
 });
 
 // Announcements
 ipcMain.handle('db:getAnnouncements', async () => {
+  logger.debug('Getting announcements');
   return new Promise((resolve, reject) => {
-    db.all('SELECT * FROM announcements ORDER BY created_at DESC', [], (err, rows) => {
-      if (err) reject(err);
-      else resolve(rows);
+    db.db.all('SELECT * FROM announcements ORDER BY created_at DESC', (err, rows) => {
+      if (err) {
+        logger.error('Error getting announcements', { error: err.message });
+        reject(err);
+      } else {
+        logger.debug('Retrieved announcements', { count: rows.length });
+        resolve(rows || []);
+      }
     });
   });
 });
+
 ipcMain.handle('db:addAnnouncement', async (event, announcement) => {
+  logger.debug('Adding announcement', { title: announcement.title });
   return new Promise((resolve, reject) => {
-    db.run('INSERT INTO announcements (title, content, priority) VALUES (?, ?, ?)', [announcement.title, announcement.content, announcement.priority || 'normal'], function(err) {
-      if (err) reject(err);
-      else resolve({ success: true, id: this.lastID });
+    db.db.run(`INSERT INTO announcements 
+      (title, content, priority, expiry_date) 
+      VALUES (?, ?, ?, ?)`, 
+      [announcement.title, announcement.content, announcement.priority, announcement.expiry_date], 
+      function(err) {
+        if (err) {
+          logger.error('Error adding announcement', { error: err.message });
+          reject(err);
+        } else {
+          logger.info('Added announcement', { id: this.lastID, title: announcement.title });
+          resolve({ success: true, id: this.lastID });
+        }
     });
   });
 });
+
+// Member Check-ins
+ipcMain.handle('db:addCheckIn', async (event, checkIn) => {
+  logger.debug('Adding member check-in', { memberName: checkIn.memberName });
+  return new Promise((resolve, reject) => {
+    db.db.run('INSERT INTO check_ins (member_id, member_name, purpose, notes) VALUES (?, ?, ?, ?)', 
+      [checkIn.memberId, checkIn.memberName || 'Unknown', checkIn.purpose, checkIn.notes], 
+      function(err) {
+        if (err) {
+          logger.error('Error adding check-in', { error: err.message });
+          reject(err);
+        } else {
+          logger.info('Added check-in', { id: this.lastID, memberName: checkIn.memberName });
+          resolve({ success: true, id: this.lastID });
+        }
+      });
+  });
+});
+
+// These handlers are already defined above
