@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="src/assets/logo.png" alt="Tribute Music Gallery Logo" style="max-width:120px; margin-bottom:1em;" />
+  <img src="src/assets/logo.svg" alt="Tribute Music Gallery Logo" style="max-width:120px; margin-bottom:1em;" />
 </p>
 
 # Tribute Music Gallery Front Desk Ops App
@@ -12,6 +12,9 @@ A cross-platform Electron.js desktop application for managing front desk operati
 - Knowledge base for staff
 - Incident reporting
 - Announcements system
+- Dark/light theme toggle for UI customization
+- Responsive layout for different screen sizes
+- Tribute Gallery branding with custom color palette
 - Integration-ready for:
   - TimeXpress (MS SQL)
   - Scan-ID
@@ -47,6 +50,8 @@ npm start
 ```
 
 The app will launch in a desktop window. You can now:
+- Toggle between dark and light themes using the "Toggle Theme" button in the sidebar
+- Navigate between different sections using the sidebar menu
 - Add/view incident reports
 - Add/view announcements
 - Browse the knowledge base
@@ -78,6 +83,12 @@ front_desk_ops_app/
 - All incident reports, announcements, and knowledge base articles are stored locally in SQLite (`data/frontdeskops.sqlite3`).
 - IPC handlers connect the renderer (UI) to the database.
 - UI auto-updates after new records are added.
+- Theme preference is stored in localStorage and persists between sessions.
+- The UI uses CSS variables for theming, defined in `src/styles/main.css`.
+- Tribute Gallery branding colors are implemented throughout the UI:
+  - Primary: #FF3B3B (Tribute Red)
+  - Secondary: #181818 (Gallery Black)
+  - Accent: #FFE066 (Gold)
 
 ## Troubleshooting
 - If you see a database error on first run, ensure the `data/` directory exists and is writable.

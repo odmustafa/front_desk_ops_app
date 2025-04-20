@@ -393,6 +393,29 @@ function setupAnnouncementForm() {
 
 document.addEventListener('DOMContentLoaded', setupAnnouncementForm);
 
+// --- Theme Toggle ---
+function setTheme(theme) {
+  const html = document.documentElement;
+  if (theme === 'light') {
+    html.classList.add('light-theme');
+  } else {
+    html.classList.remove('light-theme');
+  }
+  localStorage.setItem('theme', theme);
+}
+
+function toggleTheme() {
+  const html = document.documentElement;
+  const isLight = html.classList.toggle('light-theme');
+  localStorage.setItem('theme', isLight ? 'light' : 'dark');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const savedTheme = localStorage.getItem('theme');
+  if (savedTheme === 'light') setTheme('light');
+  document.getElementById('theme-toggle-btn')?.addEventListener('click', toggleTheme);
+});
+
 // Export functions for use in other modules
 window.app = {
   navigateToPage,
