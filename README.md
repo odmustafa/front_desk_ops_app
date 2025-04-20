@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="src/assets/logo.png" alt="Tribute Music Gallery Logo" style="max-width:120px; margin-bottom:1em;" />
+</p>
+
 # Tribute Music Gallery Front Desk Ops App
 
 A cross-platform Electron.js desktop application for managing front desk operations at the Tribute Music Gallery private membership club.

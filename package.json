@@ -17,10 +17,10 @@
   "author": "Tribute Music Gallery",
   "license": "ISC",
   "dependencies": {
-    "sqlite3": "^5.1.6",
-    "mssql": "^10.0.1",
+    "axios": "^1.6.7",
     "csv-parse": "^5.5.0",
-    "axios": "^1.6.7"
+    "mssql": "^10.0.1",
+    "sqlite3": "^5.1.6"
   },
   "build": {
     "appId": "com.tributegallery.frontdeskops",
@@ -34,5 +34,8 @@
     "mac": {
       "target": "dmg"
     }
+  },
+  "devDependencies": {
+    "electron": "^35.2.0"
   }
 }

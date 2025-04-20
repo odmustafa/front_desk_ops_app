@@ -1,31 +1,33 @@
 /* Main Styles for Front Desk Ops Application */
 
 :root {
-  --primary-color: #3498db;
-  --secondary-color: #2c3e50;
-  --success-color: #2ecc71;
-  --danger-color: #e74c3c;
-  --warning-color: #f39c12;
-  --light-color: #ecf0f1;
-  --dark-color: #2c3e50;
+  --primary-color: #FF3B3B;      /* Tribute Red */
+  --secondary-color: #181818;    /* Gallery Black */
+  --accent-color: #FFE066;       /* Gold Accent */
+  --text-color: #FFFFFF;         /* White */
+  --muted-text-color: #BDBDBD;   /* Muted Gray */
+  --border-color: #333333;       /* Border Gray */
+  --card-bg: #222222;            /* Card/Container BG */
   --sidebar-width: 250px;
 }
 
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f5f5f5;
+  background-color: var(--secondary-color);
+  color: var(--text-color);
   overflow-x: hidden;
 }
 
 /* Sidebar Styles */
 .sidebar {
   background-color: var(--secondary-color);
-  color: white;
+  color: var(--text-color);
   min-height: 100vh;
   padding: 0;
   position: fixed;
   width: var(--sidebar-width);
   z-index: 100;
+  border-right: 1px solid var(--border-color);
 }
 
 .logo-container {
@@ -46,8 +48,8 @@ body {
 }
 
 .nav-link:hover, .nav-link.active {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: white;
+  background-color: var(--primary-color);
+  color: var(--text-color);
 }
 
 .nav-link i {
@@ -86,6 +88,8 @@ body {
 .main-content {
   margin-left: var(--sidebar-width);
   padding: 20px;
+  background: var(--secondary-color);
+  color: var(--text-color);
 }
 
 .content-page {
@@ -111,14 +115,17 @@ h2 {
 
 .card {
   margin-bottom: 20px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  border: none;
+  background: var(--card-bg);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.15);
 }
 
 .card-header {
-  background-color: white;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  background-color: var(--card-bg);
+  border-bottom: 1px solid var(--border-color);
   font-weight: bold;
+  color: var(--accent-color);
 }
 
 .count {
@@ -162,9 +169,10 @@ h2 {
   cursor: pointer;
 }
 
-#kb-categories .list-group-item.active {
-  background-color: var(--primary-color);
-  border-color: var(--primary-color);
+#kb-categories .list-group-item.btn-primary {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+  color: var(--text-color) !important;
 }
 
 /* Incident Report Styles */
@@ -172,23 +180,37 @@ h2 {
   cursor: pointer;
 }
 
+/* Add your custom styles here */
+
+.logo-white {
+  filter: invert(1) brightness(2) grayscale(1);
+}
+
+/* For inline SVGs with fill, you could also use:
+.logo-white svg {
+  fill: #fff;
+}
+*/
+
 /* Announcements Styles */
 .announcement {
   margin-bottom: 15px;
   padding: 15px;
   border-radius: 5px;
-  background-color: #f8f9fa;
+  background-color: var(--card-bg);
   border-left: 4px solid var(--primary-color);
+  color: var(--text-color);
 }
 
 .announcement.high-priority {
-  border-left-color: var(--danger-color);
-  background-color: rgba(231, 76, 60, 0.1);
+  border-left-color: var(--primary-color);
+  background-color: rgba(255, 59, 59, 0.08);
 }
 
 .announcement.medium-priority {
-  border-left-color: var(--warning-color);
-  background-color: rgba(243, 156, 18, 0.1);
+  border-left-color: var(--accent-color);
+  background-color: rgba(255, 224, 102, 0.08);
+  color: var(--secondary-color);
 }
 
 .announcement-title {
@@ -253,14 +275,14 @@ h2 {
 
 /* Utility Classes */
 .text-primary { color: var(--primary-color) !important; }
-.text-success { color: var(--success-color) !important; }
-.text-danger { color: var(--danger-color) !important; }
-.text-warning { color: var(--warning-color) !important; }
+.text-success { color: var(--accent-color) !important; }
+.text-danger { color: var(--primary-color) !important; }
+.text-warning { color: var(--accent-color) !important; }
 
 .bg-primary { background-color: var(--primary-color) !important; }
-.bg-success { background-color: var(--success-color) !important; }
-.bg-danger { background-color: var(--danger-color) !important; }
-.bg-warning { background-color: var(--warning-color) !important; }
+.bg-success { background-color: var(--accent-color) !important; }
+.bg-danger { background-color: var(--primary-color) !important; }
+.bg-warning { background-color: var(--accent-color) !important; }
 
 /* Animation for alerts */
 @keyframes shake {
