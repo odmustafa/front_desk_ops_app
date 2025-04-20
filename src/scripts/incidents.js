@@ -1,10 +1,11 @@
 // incidents.js
 // Module for managing incident reports in the Front Desk Ops app
 
-const { ipcRenderer } = window.require ? window.require('electron') : {};
+// Use the API exposed by the preload script instead of direct require
+const ipcRenderer = window.app?.ipcRenderer;
 
 // Get all incident reports
-export async function getIncidentReports() {
+async function getIncidentReports() {
     if (ipcRenderer) {
         return await ipcRenderer.invoke('db:getIncidentReports');
     } else {
@@ -22,7 +23,7 @@ export async function getIncidentReports() {
 }
 
 // Add a new incident report
-export async function addIncidentReport(report) {
+async function addIncidentReport(report) {
     if (ipcRenderer) {
         return await ipcRenderer.invoke('db:addIncidentReport', report);
     } else {
@@ -32,7 +33,7 @@ export async function addIncidentReport(report) {
 }
 
 // Initialize incidents module
-export function initializeIncidents() {
+function initializeIncidents() {
     const incidentForm = document.getElementById('incident-form');
     const newIncidentBtn = document.getElementById('new-incident-btn');
     
@@ -150,14 +151,45 @@ async function loadIncidentReports() {
 
 // Show incident details
 function showIncidentDetails(report) {
-    // You could implement a modal or populate a details section here
+    // Get a more descriptive incident type name
+    let incidentTypeName = 'N/A';
+    switch(report.incident_type) {
+        case 'medical':
+            incidentTypeName = 'Medical Emergency';
+            break;
+        case 'security':
+            incidentTypeName = 'Security Issue';
+            break;
+        case 'facility':
+            incidentTypeName = 'Facility Problem';
+            break;
+        case 'member':
+            incidentTypeName = 'Member Complaint';
+            break;
+        case 'technology':
+            incidentTypeName = 'Technology Issue';
+            break;
+        case 'breach':
+            incidentTypeName = 'Breach of Peace';
+            break;
+        case 'other':
+            incidentTypeName = 'Other';
+            break;
+        default:
+            incidentTypeName = report.incident_type || 'N/A';
+    }
+    
+    // Format the status with proper capitalization
+    const formattedStatus = report.status ? report.status.charAt(0).toUpperCase() + report.status.slice(1) : 'N/A';
+    
+    // Show the incident details
     window.app.showAlert(
         `Incident Report #${report.id}`, 
         `<strong>Reported By:</strong> ${report.reported_by || 'Anonymous'}<br>
          <strong>Date:</strong> ${new Date(report.created_at).toLocaleString()}<br>
          <strong>Location:</strong> ${report.location || 'N/A'}<br>
-         <strong>Type:</strong> ${report.incident_type || 'N/A'}<br>
-         <strong>Status:</strong> ${report.status}<br>
+         <strong>Type:</strong> ${incidentTypeName}<br>
+         <strong>Status:</strong> ${formattedStatus}<br>
          <strong>Description:</strong> ${report.description}<br>
          <strong>Action Taken:</strong> ${report.action_taken || 'N/A'}`
     );
@@ -165,3 +197,12 @@ function showIncidentDetails(report) {
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', initializeIncidents);
+
+// Make functions available globally
+window.incidentsModule = {
+    getIncidentReports,
+    addIncidentReport,
+    initializeIncidents,
+    loadIncidentReports,
+    showIncidentDetails
+};

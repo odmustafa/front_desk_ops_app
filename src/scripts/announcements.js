@@ -1,10 +1,11 @@
 // announcements.js
 // Module for managing announcements in the Front Desk Ops app
 
-const { ipcRenderer } = window.require ? window.require('electron') : {};
+// Use the API exposed by the preload script instead of direct require
+const ipcRenderer = window.app?.ipcRenderer;
 
 // Get all announcements
-export async function getAnnouncements() {
+async function getAnnouncements() {
     if (ipcRenderer) {
         return await ipcRenderer.invoke('db:getAnnouncements');
     } else {
@@ -22,7 +23,7 @@ export async function getAnnouncements() {
 }
 
 // Add a new announcement
-export async function addAnnouncement(announcement) {
+async function addAnnouncement(announcement) {
     if (ipcRenderer) {
         return await ipcRenderer.invoke('db:addAnnouncement', announcement);
     } else {
@@ -32,7 +33,7 @@ export async function addAnnouncement(announcement) {
 }
 
 // Initialize announcements module
-export function initializeAnnouncements() {
+function initializeAnnouncements() {
     const announcementForm = document.getElementById('announcement-form');
     const allAnnouncements = document.getElementById('all-announcements');
     
@@ -176,3 +177,12 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeAnnouncements();
     initializeWithSamples();
 });
+
+// Make functions available globally
+window.announcementsModule = {
+    getAnnouncements,
+    addAnnouncement,
+    initializeAnnouncements,
+    loadAnnouncements,
+    createSampleAnnouncements
+};

@@ -1,10 +1,11 @@
 // knowledge-base.js
 // Module for managing the knowledge base section of the Front Desk Ops app
 
-const { ipcRenderer } = window.require ? window.require('electron') : {};
+// Use the API exposed by the preload script instead of direct require
+const ipcRenderer = window.app?.ipcRenderer;
 
 // Get all knowledge base articles or filter by category
-export async function getKnowledgeBaseArticles(category = null) {
+async function getKnowledgeBaseArticles(category = null) {
     if (ipcRenderer) {
         const articles = await ipcRenderer.invoke('db:getKnowledgeBaseArticles');
         if (category && category !== 'all') {
@@ -20,7 +21,7 @@ export async function getKnowledgeBaseArticles(category = null) {
 }
 
 // Add a new knowledge base article
-export async function addKnowledgeBaseArticle(article) {
+async function addKnowledgeBaseArticle(article) {
     if (ipcRenderer) {
         return await ipcRenderer.invoke('db:addKnowledgeBaseArticle', article);
     } else {
@@ -30,7 +31,7 @@ export async function addKnowledgeBaseArticle(article) {
 }
 
 // Search knowledge base articles
-export async function searchKnowledgeBase(query) {
+async function searchKnowledgeBase(query) {
     if (!query) return [];
     
     const articles = await getKnowledgeBaseArticles();
@@ -43,7 +44,7 @@ export async function searchKnowledgeBase(query) {
 }
 
 // Initialize knowledge base UI
-export function initializeKnowledgeBase() {
+function initializeKnowledgeBase() {
     const categoryLinks = document.querySelectorAll('#kb-categories .list-group-item');
     const searchInput = document.getElementById('kb-search');
     const searchButton = document.getElementById('kb-search-btn');
@@ -166,3 +167,11 @@ async function createSampleArticles() {
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', initializeKnowledgeBase);
+
+// Make functions available globally
+window.knowledgeBaseModule = {
+    getKnowledgeBaseArticles,
+    addKnowledgeBaseArticle,
+    searchKnowledgeBase,
+    initializeKnowledgeBase
+};

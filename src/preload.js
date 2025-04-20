@@ -2,8 +2,12 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 // Expose protected methods that allow the renderer process to use
 // the ipcRenderer without exposing the entire object
-contextBridge.exposeInMainWorld(
-  'api', {
+contextBridge.exposeInMainWorld('app', {
+  // Direct access to ipcRenderer (safe methods only)
+  ipcRenderer: {
+    invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args)
+  },
+  
     // Wix integration
     getWixMember: (memberData) => ipcRenderer.invoke('wix-get-member', memberData),
     updateWixMember: (memberData) => ipcRenderer.invoke('wix-update-member', memberData),

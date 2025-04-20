@@ -14,10 +14,15 @@ let alertModalConfirm;
 // Initialize Bootstrap components when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
   // Initialize Bootstrap components
-  alertModal = new bootstrap.Modal(document.getElementById('alert-modal'));
-  alertModalTitle = document.getElementById('alert-modal-title');
-  alertModalBody = document.getElementById('alert-modal-body');
-  alertModalConfirm = document.getElementById('alert-modal-confirm');
+  const alertModalElement = document.getElementById('alert-modal');
+  if (alertModalElement) {
+    alertModal = new bootstrap.Modal(alertModalElement);
+    alertModalTitle = document.getElementById('alert-modal-title');
+    alertModalBody = document.getElementById('alert-modal-body');
+    alertModalConfirm = document.getElementById('alert-modal-confirm');
+  } else {
+    console.warn('Alert modal element not found');
+  }
   
   // Set up navigation
   setupNavigation();
@@ -302,9 +307,12 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Export functions for use in other modules
-window.app = {
+window.app = window.app || {};
+
+// Extend the app object with our functions
+Object.assign(window.app, {
   navigateToPage,
   showAlert,
   showConfirmDialog,
   appState
-};
+});
