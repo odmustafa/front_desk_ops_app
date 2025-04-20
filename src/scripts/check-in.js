@@ -440,12 +440,12 @@ function resetCheckInForm() {
   checkInState.isOnboarding = false;
   
   // Reset UI elements
-  idPhoto.src = '../assets/placeholder-profile.png';
+  idPhoto.src = '../assets/placeholder-profile.svg';
   idFirstName.value = '';
   idLastName.value = '';
   idDob.value = '';
   
-  profilePhoto.src = '../assets/placeholder-profile.png';
+  profilePhoto.src = '../assets/placeholder-profile.svg';
   accountFirstName.value = '';
   accountLastName.value = '';
   accountBirthday.value = '';

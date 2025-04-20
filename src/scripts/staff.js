@@ -587,7 +587,7 @@ function viewStaffMember(staffId) {
     // Show staff details in a modal
     const detailsHtml = `
       <div class="text-center mb-3">
-        <img src="../assets/placeholder-profile.png" alt="${member.name}" class="staff-photo-large">
+        <img src="../assets/placeholder-profile.svg" alt="${member.name}" class="staff-photo-large">
         <h5 class="mt-2">${member.name}</h5>
         <span class="badge ${member.status === 'Active' ? 'bg-success' : 'bg-warning text-dark'}">${member.status}</span>
       </div>

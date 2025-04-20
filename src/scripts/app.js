@@ -38,7 +38,7 @@ const appState = {
   currentUser: {
     name: 'Staff Member',
     role: 'Front Desk',
-    photo: '../assets/placeholder-profile.png'
+    photo: '../assets/placeholder-profile.svg'
   }
 };
 
