@@ -7,6 +7,20 @@
 const wixIntegration = window.require ? window.require('../database/wix-integration.js') : null;
 const { ipcRenderer } = window.require ? window.require('electron') : {};
 
+// Get logger
+let logger;
+try {
+    logger = window.require ? window.require('../utils/logger.js') : console;
+} catch (error) {
+    // Fallback to console if logger is not available
+    logger = {
+        debug: console.debug,
+        info: console.info,
+        warn: console.warn,
+        error: console.error
+    };
+}
+
 // DOM Elements
 let memberSearchInput;
 let memberSearchBtn;
@@ -103,6 +117,13 @@ async function searchMembers(quickSearch = false) {
         return;
     }
     
+    // Log search attempt
+    logger.info(`Member search initiated`, { 
+        searchTerm, 
+        quickSearch, 
+        localOnly: searchLocalOnly?.checked 
+    });
+    
     try {
         // Show loading state (only for full searches, not quick searches)
         if (!quickSearch) {
@@ -121,32 +142,62 @@ async function searchMembers(quickSearch = false) {
         // First try to search in local database cache
         let members = [];
         if (ipcRenderer) {
+            logger.debug(`Searching local cache for: ${searchTerm}`);
             members = await ipcRenderer.invoke('db:getCachedMembers', searchTerm);
+            logger.debug(`Local cache search results:`, { count: members.length });
         }
         
         // If no results in cache and local-only is not checked, try Wix API
         if (members.length === 0 && !localOnly) {
             // Search for members using Wix API
             if (ipcRenderer) {
+                logger.debug(`Searching Wix API for: ${searchTerm}`);
                 const result = await ipcRenderer.invoke('wix:searchMembers', searchTerm);
                 if (result.success) {
                     members = result.members;
+                    logger.debug(`Wix API search results:`, { count: members.length });
                     
                     // Cache these members for future searches
                     if (members.length > 0) {
+                        logger.debug(`Caching ${members.length} members from Wix API`);
                         members.forEach(member => cacheMember(member));
                     }
                 } else {
+                    logger.error(`Wix API search failed:`, { error: result.error });
                     throw new Error(result.error || 'Failed to search members');
                 }
             } else {
                 // For development without Electron
+                logger.debug(`Searching Wix API directly for: ${searchTerm}`);
                 members = await wixIntegration.searchWixMembers(searchTerm);
+                logger.debug(`Direct Wix API search results:`, { count: members.length });
             }
         }
         
         // Store the search results for later use
         lastSearchResults = members;
+        
+        // Log search results
+        logger.info(`Member search completed`, { 
+            searchTerm, 
+            totalResults: members.length,
+            source: localOnly ? 'local database' : 'Wix and local database'
+        });
+        
+        // Output detailed results to console for debugging
+        if (members.length > 0) {
+            console.group(`Member Search Results for "${searchTerm}"`);
+            members.forEach((member, index) => {
+                const firstName = member.contactInfo?.firstName || member.first_name || '';
+                const lastName = member.contactInfo?.lastName || member.last_name || '';
+                const name = (firstName || lastName) ? `${firstName} ${lastName}`.trim() : 'Unknown Name';
+                const email = member.loginEmail || member.email || 'No email';
+                const memberId = member._id || member.wix_id;
+                
+                console.log(`${index + 1}. ${name} (${memberId}) - ${email}`);
+            });
+            console.groupEnd();
+        }
         
         // Display results
         if (members.length === 0) {
@@ -203,10 +254,8 @@ async function searchMembers(quickSearch = false) {
         html += '</div>';
         
         // Add a source indicator
-        if (!quickSearch) {
-            const source = localOnly ? 'local database' : 'Wix and local database';
-            html += `<div class="text-muted small mt-2">Results from: ${source}</div>`;
-        }
+        const source = localOnly ? 'local database' : 'Wix and local database';
+        html += `<div class="text-muted small mt-2">Results from: ${source}</div>`;
         
         memberSearchResults.innerHTML = html;
         

@@ -2,6 +2,12 @@ const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
+// Import logger
+const logger = require('./utils/logger');
+
+// Log application start
+logger.info('Application starting', { version: app.getVersion(), platform: process.platform });
+
 // Keep a global reference of the window object to prevent garbage collection
 let mainWindow;
 
@@ -75,12 +81,21 @@ const wixIntegration = require('./database/wix-integration');
 // Wix API integration handlers
 ipcMain.handle('wix:initConfig', async (event, credentials) => {
   try {
+    logger.info('Initializing Wix configuration');
     // Use provided credentials or fall back to config file
     const wixCredentials = credentials || config.wix;
+    // Log with sensitive data redacted
+    logger.debug('Wix credentials provided', { 
+      siteId: wixCredentials.siteId,
+      hasApiKey: !!wixCredentials.apiKey,
+      hasApiSecret: !!wixCredentials.apiSecret
+    });
+    
     const wixConfig = await wixIntegration.initWixConfig(wixCredentials);
+    logger.info('Wix configuration initialized successfully');
     return { success: true, config: wixConfig };
   } catch (error) {
-    console.error('Error initializing Wix config:', error);
+    logger.error('Error initializing Wix config:', { error: error.message, stack: error.stack });
     return { success: false, error: error.message };
   }
 });
@@ -146,36 +161,46 @@ ipcMain.handle('wix:getMembers', async (event, filters) => {
 
 ipcMain.handle('wix:searchMembers', async (event, searchTerm) => {
   try {
+    logger.info('Searching Wix members', { searchTerm });
     const members = await wixIntegration.searchWixMembers(searchTerm);
+    logger.info('Wix member search completed', { searchTerm, resultsCount: members.length });
     return { success: true, members };
   } catch (error) {
-    console.error('Error searching Wix members:', error);
+    logger.error('Error searching Wix members:', { searchTerm, error: error.message, stack: error.stack });
     return { success: false, error: error.message };
   }
 });
 
 ipcMain.handle('wix:getMember', async (event, memberId) => {
   try {
+    logger.info('Getting member details', { memberId });
+    
     // First try to get from local database cache
     let member = await db.getMemberById(memberId);
     
-    // If not in cache, get from Wix API
-    if (!member) {
+    if (member) {
+      logger.debug('Member found in local cache', { memberId });
+    } else {
+      logger.debug('Member not found in cache, fetching from Wix API', { memberId });
+      
       // Use a filter to get a specific member by ID
       const members = await wixIntegration.getWixMembers({ memberId });
       member = members && members.length > 0 ? members[0] : null;
       
       if (!member) {
+        logger.warn('Member not found in Wix API', { memberId });
         throw new Error(`Member with ID ${memberId} not found`);
       }
       
       // Cache the member for future use
+      logger.debug('Caching member data', { memberId });
       await db.cacheMember(member);
     }
     
+    logger.info('Member details retrieved successfully', { memberId });
     return { success: true, member };
   } catch (error) {
-    console.error(`Error getting member ${memberId}:`, error);
+    logger.error(`Error getting member:`, { memberId, error: error.message, stack: error.stack });
     return { success: false, error: error.message };
   }
 });
