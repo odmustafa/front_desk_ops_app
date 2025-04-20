@@ -417,3 +417,70 @@ ipcMain.handle('db:addCheckIn', async (event, checkIn) => {
 });
 
 // These handlers are already defined above
+
+// Connection Status Handlers
+ipcMain.handle('wix:checkConnection', async () => {
+  logger.debug('Checking Wix connection');
+  try {
+    // Simulate Wix connection check
+    // In a real implementation, this would make an API call to Wix
+    const connected = true; // For demo purposes
+    
+    logger.info('Wix connection status', { connected });
+    return { success: connected };
+  } catch (error) {
+    logger.error('Error checking Wix connection', { error: error.message });
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('timeXpress:checkConnection', async () => {
+  logger.debug('Checking TimeXpress connection');
+  try {
+    // Simulate TimeXpress connection check
+    // In a real implementation, this would try to connect to TimeXpress
+    const connected = Math.random() > 0.3; // Randomly fail sometimes for demo
+    
+    logger.info('TimeXpress connection status', { connected });
+    return { success: connected };
+  } catch (error) {
+    logger.error('Error checking TimeXpress connection', { error: error.message });
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('scanID:checkConnection', async () => {
+  logger.debug('Checking Scan-ID connection');
+  try {
+    // Simulate Scan-ID connection check
+    // In a real implementation, this would try to connect to the Scan-ID device
+    const connected = Math.random() > 0.5; // Randomly fail sometimes for demo
+    
+    logger.info('Scan-ID connection status', { connected });
+    return { success: connected };
+  } catch (error) {
+    logger.error('Error checking Scan-ID connection', { error: error.message });
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('db:checkConnection', async () => {
+  logger.debug('Checking database connection');
+  try {
+    // Check database connection by running a simple query
+    return new Promise((resolve, reject) => {
+      db.db.get('SELECT 1', (err) => {
+        if (err) {
+          logger.error('Database connection failed', { error: err.message });
+          resolve({ success: false, error: err.message });
+        } else {
+          logger.info('Database connection successful');
+          resolve({ success: true });
+        }
+      });
+    });
+  } catch (error) {
+    logger.error('Error checking database connection', { error: error.message });
+    return { success: false, error: error.message };
+  }
+});
