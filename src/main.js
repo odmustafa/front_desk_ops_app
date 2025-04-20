@@ -491,38 +491,18 @@ ipcMain.handle('wix:checkConnection', async () => {
         }
       };
     } catch (authError) {
-      // If authentication fails, try a different approach
-      // For demo purposes, we'll consider the connection successful if:
-      // 1. We have valid credentials in the correct format
-      // 2. We can connect to Wix.com
-      // This simulates a successful API connection while we troubleshoot the actual API integration
+      // Log the authentication error
+      logger.error('Wix API authentication failed', {
+        error: authError.message,
+        status: authError.response?.status,
+        statusText: authError.response?.statusText
+      });
       
-      const isValidApiKey = wixApiKey.length > 20;
-      const isValidSiteId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(wixSiteId);
-      
-      if (isValidApiKey && isValidSiteId) {
-        logger.info('Wix credentials validated (fallback method)', {
-          apiKeyValid: isValidApiKey,
-          siteIdValid: isValidSiteId,
-          authError: authError.message
-        });
-        
-        // For demonstration purposes, we'll show this as connected
-        // In a production environment, you would want to fix the API integration
-        return {
-          success: true,
-          data: {
-            connected: true,
-            message: 'Credentials validated (API integration pending)'
-          }
-        };
-      } else {
-        logger.warn('Invalid Wix credential format');
-        return {
-          success: false,
-          error: 'Invalid API credential format'
-        };
-      }
+      // Return failure - no fallback method
+      return {
+        success: false,
+        error: 'Wix API authentication failed: ' + (authError.response?.data?.message || authError.message)
+      };
     }
   } catch (error) {
     // This could be a general error
