@@ -329,11 +329,12 @@ h2 {
   bottom: 0;
   left: 0;
   right: 0;
-  background-color: var(--dark-bg);
+  background-color: var(--card-bg);
   border-top: 1px solid var(--border-color);
   padding: 5px 0;
   z-index: 1000;
   font-size: 12px;
+  height: 30px;
 }
 
 .status-indicator {
@@ -345,6 +346,7 @@ h2 {
 .status-label {
   font-weight: bold;
   margin-right: 10px;
+  color: var(--text-color);
 }
 
 .status-dot {
@@ -356,7 +358,8 @@ h2 {
 }
 
 .status-text {
-  color: var(--text-muted);
+  color: var(--text-color);
+  font-weight: 500;
 }
 
 .status-unknown {
@@ -377,12 +380,18 @@ h2 {
 
 .last-updated {
   font-size: 11px;
-  color: var(--text-muted);
+  color: var(--text-color);
+  opacity: 0.8;
 }
 
 /* Add padding to the bottom of the content to account for the status bar */
-.content-wrapper {
-  padding-bottom: 30px;
+.content-wrapper, .sidebar, .main-content {
+  padding-bottom: 40px;
+}
+
+/* Ensure the footer content doesn't overlap with status bar */
+.sidebar-footer {
+  margin-bottom: 30px;
 }
 
 .announcement.high-priority {
