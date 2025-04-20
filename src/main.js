@@ -504,8 +504,10 @@ ipcMain.handle('wix:checkConnection', async () => {
         siteIdFormat: wixSiteId
       });
       
-      // Try the OAuth approach first as recommended in the Wix documentation
-      logger.debug('Attempting OAuth authentication...');
+      // Try the App Instance authentication approach as recommended in the Wix documentation
+      logger.debug('Attempting App Instance authentication...');
+      
+      // Format the request exactly as specified in the Wix documentation
       const response = await axios({
         method: 'POST',
         url: 'https://www.wixapis.com/oauth/access',
@@ -513,11 +515,12 @@ ipcMain.handle('wix:checkConnection', async () => {
           'Content-Type': 'application/json'
         },
         data: {
-          grant_type: 'client_credentials',
-          client_id: wixClientId,
-          client_secret: wixApiSecret
+          grantType: 'refresh_token',  // Use refresh_token instead of client_credentials
+          clientId: wixClientId,
+          clientSecret: wixApiSecret,
+          refreshToken: wixApiKey  // Use the API key as the refresh token
         },
-        timeout: 8000
+        timeout: 10000  // Increase timeout for better reliability
       });
       
       logger.info('Wix API authentication successful', { 
@@ -552,15 +555,25 @@ ipcMain.handle('wix:checkConnection', async () => {
       // Try an alternative authentication endpoint for debugging
       try {
         logger.debug('Attempting alternative Wix API authentication endpoint...');
+        // Try a direct API call with the API key as a Bearer token
         const altResponse = await axios({
           method: 'GET',
-          url: 'https://www.wixapis.com/stores/v1/inventory/v2/variants/query',
+          url: 'https://www.wixapis.com/wix-data/v2/items/query',
           headers: {
-            'Authorization': wixApiKey,
+            'Authorization': `Bearer ${wixApiKey}`,
             'wix-site-id': wixSiteId,
+            'wix-account-id': wixAccountId,
             'Content-Type': 'application/json'
           },
-          timeout: 8000
+          data: {
+            dataCollectionId: 'Members',
+            query: {
+              paging: {
+                limit: 1
+              }
+            }
+          },
+          timeout: 10000
         });
         
         logger.info('Alternative Wix API authentication successful', { 
@@ -593,15 +606,16 @@ ipcMain.handle('wix:checkConnection', async () => {
           });
           
           // Try a different endpoint with a different authentication approach
+          // Try a different API endpoint with a different authentication method
           const thirdResponse = await axios({
             method: 'GET',
-            url: 'https://www.wixapis.com/site-members/v1/members/count',
+            url: `https://www.wixapis.com/site/v1/sites/${wixSiteId}`,
             headers: {
               'Authorization': wixApiKey,
-              'wix-site-id': wixSiteId,
+              'wix-account-id': wixAccountId,
               'Content-Type': 'application/json'
             },
-            timeout: 8000
+            timeout: 10000
           });
           
           logger.info('Third Wix API approach successful', { 
