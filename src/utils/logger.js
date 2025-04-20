@@ -16,22 +16,32 @@ const LOG_LEVELS = {
   ERROR: 'ERROR'
 };
 
-// Log directory path
-const logDir = path.join(app.getPath('userData'), 'logs');
+// Log directories - one in user data dir and one in project root for easy access
+const userDataLogDir = path.join(app.getPath('userData'), 'logs');
+const projectLogDir = path.join(__dirname, '../../logs');
 
-// Ensure log directory exists
-if (!fs.existsSync(logDir)) {
-  fs.mkdirSync(logDir, { recursive: true });
+// Ensure log directories exist
+if (!fs.existsSync(userDataLogDir)) {
+  fs.mkdirSync(userDataLogDir, { recursive: true });
+}
+
+if (!fs.existsSync(projectLogDir)) {
+  fs.mkdirSync(projectLogDir, { recursive: true });
 }
 
 /**
- * Get current log file path (rotated daily)
- * @returns {string} - Path to current log file
+ * Get current log file paths (rotated daily)
+ * @returns {Object} - Paths to current log files
  */
-function getCurrentLogFile() {
+function getCurrentLogFiles() {
   const now = new Date();
   const dateStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
-  return path.join(logDir, `debug-${dateStr}.log`);
+  const filename = `debug-${dateStr}.log`;
+  
+  return {
+    userDataLog: path.join(userDataLogDir, filename),
+    projectLog: path.join(projectLogDir, filename)
+  };
 }
 
 /**
@@ -61,15 +71,21 @@ function formatLogMessage(level, message, data) {
 }
 
 /**
- * Write log to file
+ * Write log to files
  * @param {string} message - Formatted log message
  */
 function writeToFile(message) {
   try {
-    const logFile = getCurrentLogFile();
-    fs.appendFileSync(logFile, message + '\n');
+    const logFiles = getCurrentLogFiles();
+    
+    // Write to user data directory log
+    fs.appendFileSync(logFiles.userDataLog, message + '\n');
+    
+    // Also write to project directory log for easier access
+    fs.appendFileSync(logFiles.projectLog, message + '\n');
+    
   } catch (error) {
-    console.error('Failed to write to log file:', error);
+    console.error('Failed to write to log files:', error);
   }
 }
 
