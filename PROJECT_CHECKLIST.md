@@ -21,9 +21,9 @@
 - [ ] User authentication and authorization system for staff
 
 ## Integration Components
-- [x] Wix Website Integration
-  - [x] API connection setup
-  - [x] Connection status monitoring
+- [ ] Wix Website Integration
+  - [ ] API connection setup (attempted but not working)
+  - [x] Connection status monitoring implementation
   - [ ] Member data synchronization
   - [ ] Membership plan verification
   - [ ] Custom fields integration (Dues, Interest, etc.)
