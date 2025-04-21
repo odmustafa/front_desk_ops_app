@@ -126,5 +126,6 @@ module.exports = {
   info: (message, data) => log(LOG_LEVELS.INFO, message, data),
   warn: (message, data) => log(LOG_LEVELS.WARN, message, data),
   error: (message, data) => log(LOG_LEVELS.ERROR, message, data),
-  LOG_LEVELS
+  LOG_LEVELS,
+  getCurrentLogFiles
 };

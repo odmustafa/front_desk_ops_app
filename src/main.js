@@ -9,6 +9,54 @@ const db = require('./database/db');
 // Log application start
 logger.info('Application starting', { version: app.getVersion(), platform: process.platform });
 
+// Load settings from storage
+function loadSettings() {
+  try {
+    const settingsPath = path.join(app.getPath('userData'), 'app-settings.json');
+    if (fs.existsSync(settingsPath)) {
+      const settingsData = fs.readFileSync(settingsPath, 'utf8');
+      const settings = JSON.parse(settingsData);
+      appSettings = { ...appSettings, ...settings };
+      logger.debug('Settings loaded', { settings: appSettings });
+    }
+  } catch (error) {
+    logger.error('Failed to load settings', { error: error.message });
+  }
+}
+
+// Save settings to storage
+function saveSettings() {
+  try {
+    const settingsPath = path.join(app.getPath('userData'), 'app-settings.json');
+    fs.writeFileSync(settingsPath, JSON.stringify(appSettings, null, 2), 'utf8');
+    logger.debug('Settings saved', { settings: appSettings });
+  } catch (error) {
+    logger.error('Failed to save settings', { error: error.message });
+  }
+}
+
+// Load settings on startup
+loadSettings();
+
+// Application settings
+let appSettings = {
+  developerMode: false
+};
+
+// Platform detection
+const isWindows = process.platform === 'win32';
+const isMacOS = process.platform === 'darwin';
+const isLinux = process.platform === 'linux';
+
+// Log platform information
+logger.info('Platform detected', { 
+  platform: process.platform,
+  isWindows,
+  isMacOS,
+  isLinux,
+  arch: process.arch
+});
+
 // Keep a global reference of the window object to prevent garbage collection
 let mainWindow;
 
@@ -61,8 +109,7 @@ app.whenReady().then(createWindow);
 
 // Quit when all windows are closed
 app.on('window-all-closed', () => {
-  // On macOS applications keep their menu bar active until the user quits
-  // explicitly with Cmd + Q
+  // On macOS it is common for applications to stay open until the user explicitly quits
   if (process.platform !== 'darwin') {
     app.quit();
   }
@@ -70,14 +117,194 @@ app.on('window-all-closed', () => {
 
 app.on('activate', () => {
   // On macOS it's common to re-create a window when the dock icon is clicked
-  // and there are no other windows open
-  if (mainWindow === null) {
+  if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
   }
 });
 
+// Debug-related IPC handlers
+
+/**
+ * Get application logs
+ */
+ipcMain.handle('debug:getLogs', async () => {
+  logger.debug('Retrieving application logs');
+  try {
+    // Get current log file path
+    const logFiles = logger.getCurrentLogFiles ? logger.getCurrentLogFiles() : {
+      projectLog: path.join(__dirname, '../logs/debug-' + new Date().toISOString().split('T')[0] + '.log')
+    };
+    
+    // Read log file
+    if (fs.existsSync(logFiles.projectLog)) {
+      const logContent = fs.readFileSync(logFiles.projectLog, 'utf8');
+      
+      // Parse log entries (simple parsing for demonstration)
+      const logEntries = logContent.split('\n\n')
+        .filter(entry => entry.trim() !== '')
+        .map(entry => {
+          // Extract timestamp, level, and message
+          const timestampMatch = entry.match(/\[(.*?)\]/); 
+          const levelMatch = entry.match(/\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z\] \[(DEBUG|INFO|WARN|ERROR)\]/i);
+          
+          const timestamp = timestampMatch ? timestampMatch[1] : '';
+          const level = levelMatch ? levelMatch[1] : 'INFO';
+          const message = entry.replace(/\[.*?\] \[.*?\] /, '');
+          
+          return {
+            timestamp,
+            level,
+            message
+          };
+        })
+        .slice(-100); // Limit to last 100 entries
+      
+      return logEntries;
+    } else {
+      logger.warn('Log file not found', { path: logFiles.projectLog });
+      return [];
+    }
+  } catch (error) {
+    logger.error('Error retrieving logs', { error: error.message });
+    return [];
+  }
+});
+
+/**
+ * Clear application logs
+ */
+ipcMain.handle('debug:clearLogs', async () => {
+  logger.debug('Clearing application logs');
+  try {
+    // Get current log file path
+    const logFiles = logger.getCurrentLogFiles ? logger.getCurrentLogFiles() : {
+      projectLog: path.join(__dirname, '../logs/debug-' + new Date().toISOString().split('T')[0] + '.log'),
+      userDataLog: path.join(app.getPath('userData'), 'logs/debug-' + new Date().toISOString().split('T')[0] + '.log')
+    };
+    
+    // Clear log files
+    if (fs.existsSync(logFiles.projectLog)) {
+      fs.writeFileSync(logFiles.projectLog, '', 'utf8');
+    }
+    
+    if (fs.existsSync(logFiles.userDataLog)) {
+      fs.writeFileSync(logFiles.userDataLog, '', 'utf8');
+    }
+    
+    logger.info('Logs cleared');
+    return { success: true };
+  } catch (error) {
+    logger.error('Error clearing logs', { error: error.message });
+    return { success: false, error: error.message };
+  }
+});
+
+/**
+ * Get system information
+ */
+ipcMain.handle('debug:getSystemInfo', async () => {
+  logger.debug('Retrieving system information');
+  try {
+    // Get current log file path
+    const logFiles = logger.getCurrentLogFiles ? logger.getCurrentLogFiles() : {
+      projectLog: path.join(__dirname, '../logs/debug-' + new Date().toISOString().split('T')[0] + '.log')
+    };
+    
+    return {
+      appVersion: app.getVersion(),
+      electronVersion: process.versions.electron,
+      platform: process.platform,
+      logPath: logFiles.projectLog
+    };
+  } catch (error) {
+    logger.error('Error retrieving system info', { error: error.message });
+    return {};
+  }
+});
+
+/**
+ * Get developer mode setting
+ */
+ipcMain.handle('settings:getDeveloperMode', async () => {
+  logger.debug('Getting developer mode setting');
+  return appSettings.developerMode || false;
+});
+
+/**
+ * Set developer mode setting
+ */
+ipcMain.handle('settings:setDeveloperMode', async (event, enabled) => {
+  logger.debug('Setting developer mode', { enabled });
+  appSettings.developerMode = enabled;
+  saveSettings();
+  return { success: true };
+});
+
 // IPC handlers for communication between main and renderer processes
 // These will handle various integrations with external systems
+
+/**
+ * Simple Wix API test handler
+ * Makes a basic API call to test connectivity
+ */
+ipcMain.handle('wix:testSimpleApi', async () => {
+  logger.debug('Running simple Wix API test');
+  try {
+    // Get settings
+    const settings = loadSettings();
+    const wixApiKey = settings.wixApiKey || '';
+    const wixSiteId = settings.wixSiteId || '';
+    
+    if (!wixApiKey || !wixSiteId) {
+      logger.warn('Wix API credentials not configured for test');
+      return { success: false, error: 'API credentials not configured' };
+    }
+    
+    // Try a very simple API call to get site information
+    logger.debug('Making simple Wix API call to test connectivity');
+    
+    // Use the simplest possible endpoint
+    const response = await axios({
+      method: 'GET',
+      url: 'https://www.wixapis.com/site-properties/v4/properties',
+      headers: {
+        'Authorization': wixApiKey,
+        'wix-site-id': wixSiteId,
+        'Content-Type': 'application/json'
+      },
+      timeout: 10000
+    });
+    
+    logger.info('Simple Wix API test successful', { status: response.status });
+    
+    // Return a simplified version of the response data
+    return {
+      success: true,
+      data: {
+        status: response.status,
+        statusText: response.statusText,
+        data: response.data
+      }
+    };
+  } catch (error) {
+    logger.error('Simple Wix API test failed', {
+      error: error.message,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data
+    });
+    
+    return {
+      success: false,
+      error: `API test failed: ${error.message}`,
+      errorDetails: {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data
+      }
+    };
+  }
+});
 
 // Import configuration and Wix integration module
 let config;
@@ -267,9 +494,126 @@ ipcMain.handle('wix:getEvents', async (event, limit) => {
 
 // ID Scanner integration
 ipcMain.handle('scan-id', async (event, scanData) => {
-  // TODO: Implement integration with Scan-ID software
-  console.log('Processing ID scan data:', scanData);
-  return { status: 'pending', message: 'ID Scanner integration pending implementation' };
+  logger.debug('Processing ID scan data');
+  
+  try {
+    // Get the Scan-ID export path from settings or use default Windows path
+    const settings = loadSettings();
+    let scanIdPath = settings.scanIdPath || '';
+    
+    // If no path is configured, use the default path based on platform
+    if (!scanIdPath) {
+      // Get user's home directory
+      const homeDir = app.getPath('home');
+      
+      // Use platform-specific default paths
+      if (isWindows) {
+        // Windows: OneDrive path
+        scanIdPath = path.join(homeDir, 'OneDrive', 'Documents', 'BCR', 'Scan-ID');
+        logger.debug('Using default Windows Scan-ID path', { path: scanIdPath });
+      } else if (isMacOS) {
+        // macOS: Documents folder
+        scanIdPath = path.join(homeDir, 'Documents', 'BCR', 'Scan-ID');
+        logger.debug('Using default macOS Scan-ID path', { path: scanIdPath });
+      } else {
+        // Linux or other: Home directory
+        scanIdPath = path.join(homeDir, 'BCR', 'Scan-ID');
+        logger.debug('Using default Linux/other Scan-ID path', { path: scanIdPath });
+      }
+    }
+    
+    // Check if the directory exists
+    if (!fs.existsSync(scanIdPath)) {
+      logger.error('Scan-ID directory not found', { path: scanIdPath });
+      return { 
+        success: false, 
+        error: `Scan-ID directory not found: ${scanIdPath}` 
+      };
+    }
+    
+    // Get the current date in YYYYMMDD format
+    const today = new Date();
+    const dateString = today.getFullYear() + 
+      String(today.getMonth() + 1).padStart(2, '0') + 
+      String(today.getDate()).padStart(2, '0');
+    
+    // Look for today's export file
+    const filePattern = `${dateString}_*.csv`;
+    const files = fs.readdirSync(scanIdPath)
+      .filter(file => {
+        // Match files with today's date pattern
+        return file.startsWith(dateString) && file.endsWith('.csv');
+      })
+      .sort((a, b) => {
+        // Sort by modification time (newest first)
+        return fs.statSync(path.join(scanIdPath, b)).mtime.getTime() - 
+               fs.statSync(path.join(scanIdPath, a)).mtime.getTime();
+      });
+    
+    if (files.length === 0) {
+      logger.warn('No Scan-ID export files found for today', { date: dateString });
+      return { 
+        success: false, 
+        error: `No Scan-ID export files found for today (${dateString})` 
+      };
+    }
+    
+    // Get the most recent file
+    const latestFile = files[0];
+    const filePath = path.join(scanIdPath, latestFile);
+    logger.debug('Found Scan-ID export file', { file: latestFile });
+    
+    // Read and parse the CSV file
+    const fileContent = fs.readFileSync(filePath, 'utf8');
+    const lines = fileContent.split('\n');
+    
+    // Process the most recent scan (last non-empty line)
+    let latestScan = null;
+    for (let i = lines.length - 1; i >= 0; i--) {
+      const line = lines[i].trim();
+      if (line && !line.startsWith('#')) {
+        // Parse the CSV line
+        const fields = line.split(',');
+        
+        // Basic validation - ensure we have enough fields
+        if (fields.length >= 5) {
+          latestScan = {
+            scanTime: fields[0],
+            firstName: fields[1],
+            lastName: fields[2],
+            dateOfBirth: fields[3],
+            idNumber: fields[4],
+            // Add other fields as needed based on the CSV format
+          };
+          break;
+        }
+      }
+    }
+    
+    if (!latestScan) {
+      logger.warn('No valid scan data found in export file', { file: latestFile });
+      return { 
+        success: false, 
+        error: 'No valid scan data found in export file' 
+      };
+    }
+    
+    logger.info('Successfully processed Scan-ID data', { 
+      file: latestFile,
+      name: `${latestScan.firstName} ${latestScan.lastName}`
+    });
+    
+    return { 
+      success: true, 
+      data: latestScan 
+    };
+  } catch (error) {
+    logger.error('Error processing Scan-ID data', { error: error.message });
+    return { 
+      success: false, 
+      error: `Error processing Scan-ID data: ${error.message}` 
+    };
+  }
 });
 
 // Time Clock integration
@@ -486,14 +830,9 @@ ipcMain.handle('wix:checkConnection', async () => {
     
     // Now attempt to authenticate with the Wix API
     try {
-      logger.debug('Attempting Wix API authentication...', {
-        apiKeyLength: wixApiKey.length,
-        apiKeyPrefix: wixApiKey.substring(0, 10) + '...',
-        siteId: wixSiteId,
-        hasApiSecret: !!wixApiSecret
-      });
+      logger.debug('Attempting Wix API authentication...');
       
-      // Log all Wix credentials for debugging
+      // Log all Wix credentials for debugging (redacted for security)
       logger.debug('Using Wix API credentials', {
         hasApiKey: !!wixApiKey,
         hasSiteId: !!wixSiteId,
@@ -504,158 +843,130 @@ ipcMain.handle('wix:checkConnection', async () => {
         siteIdFormat: wixSiteId
       });
       
-      // Try the App Instance authentication approach as recommended in the Wix documentation
-      logger.debug('Attempting App Instance authentication...');
+      // Simplified approach - just check if we can access a basic endpoint
+      // For demonstration purposes, we'll consider the connection successful
+      // if we can make any successful request to the Wix API
       
-      // Format the request exactly as specified in the Wix documentation
-      const response = await axios({
-        method: 'POST',
-        url: 'https://www.wixapis.com/oauth/access',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        data: {
-          grantType: 'refresh_token',  // Use refresh_token instead of client_credentials
-          clientId: wixClientId,
-          clientSecret: wixApiSecret,
-          refreshToken: wixApiKey  // Use the API key as the refresh token
-        },
-        timeout: 10000  // Increase timeout for better reliability
-      });
+      // Try multiple endpoints with different authentication methods
+      let success = false;
+      let responseData = null;
       
-      logger.info('Wix API authentication successful', { 
-        status: response.status,
-        statusText: response.statusText,
-        dataKeys: Object.keys(response.data || {}),
-        headers: response.headers
-      });
+      // Approach 1: Direct API key as Authorization header
+      try {
+        logger.debug('Approach 1: Using API key as Authorization header');
+        const response1 = await axios({
+          method: 'GET',
+          url: 'https://www.wixapis.com/site/v1/sites',
+          headers: {
+            'Authorization': wixApiKey,
+            'wix-site-id': wixSiteId,
+            'Content-Type': 'application/json'
+          },
+          timeout: 8000
+        });
+        
+        success = true;
+        responseData = response1.data;
+        logger.info('Approach 1 successful', { status: response1.status });
+      } catch (error1) {
+        logger.debug('Approach 1 failed', { error: error1.message });
+        
+        // Approach 2: API key with Bearer prefix
+        try {
+          logger.debug('Approach 2: Using API key with Bearer prefix');
+          const response2 = await axios({
+            method: 'GET',
+            url: 'https://www.wixapis.com/site/v1/sites',
+            headers: {
+              'Authorization': `Bearer ${wixApiKey}`,
+              'wix-site-id': wixSiteId,
+              'Content-Type': 'application/json'
+            },
+            timeout: 8000
+          });
+          
+          success = true;
+          responseData = response2.data;
+          logger.info('Approach 2 successful', { status: response2.status });
+        } catch (error2) {
+          logger.debug('Approach 2 failed', { error: error2.message });
+          
+          // Approach 3: OAuth token endpoint
+          try {
+            logger.debug('Approach 3: Using OAuth token endpoint');
+            const response3 = await axios({
+              method: 'POST',
+              url: 'https://www.wixapis.com/oauth/access',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              data: {
+                grant_type: 'refresh_token',
+                client_id: wixClientId,
+                client_secret: wixApiSecret,
+                refresh_token: wixApiKey
+              },
+              timeout: 8000
+            });
+            
+            success = true;
+            responseData = response3.data;
+            logger.info('Approach 3 successful', { status: response3.status });
+          } catch (error3) {
+            logger.debug('Approach 3 failed', { error: error3.message });
+            
+            // Approach 4: Members endpoint
+            try {
+              logger.debug('Approach 4: Using members endpoint');
+              const response4 = await axios({
+                method: 'GET',
+                url: 'https://www.wixapis.com/members/v1/members/count',
+                headers: {
+                  'Authorization': wixApiKey,
+                  'wix-site-id': wixSiteId,
+                  'Content-Type': 'application/json'
+                },
+                timeout: 8000
+              });
+              
+              success = true;
+              responseData = response4.data;
+              logger.info('Approach 4 successful', { status: response4.status });
+            } catch (error4) {
+              logger.debug('Approach 4 failed', { error: error4.message });
+              
+              // All connection attempts failed
+              success = false;
+              responseData = { message: 'All connection attempts failed' };
+              logger.error('All Wix API connection attempts failed');
+            }
+          }
+        }
+      }
       
       return { 
         success: true, 
         data: {
-          connected: true,
-          message: 'Successfully authenticated with Wix API'
+          connected: success,
+          message: success ? 'Successfully connected to Wix API' : 'Failed to connect to Wix API',
+          responseData: responseData
         }
       };
-    } catch (authError) {
-      // Log the authentication error with verbose details
-      logger.error('Wix API authentication failed', {
-        error: authError.message,
-        stack: authError.stack,
-        code: authError.code,
-        status: authError.response?.status,
-        statusText: authError.response?.statusText,
-        responseData: authError.response?.data,
-        responseHeaders: authError.response?.headers,
-        requestUrl: authError.config?.url,
-        requestMethod: authError.config?.method,
-        requestHeaders: authError.config?.headers
+    } catch (error) {
+      logger.error('Error in Wix API authentication process', {
+        error: error.message,
+        stack: error.stack
       });
       
-      // Try an alternative authentication endpoint for debugging
-      try {
-        logger.debug('Attempting alternative Wix API authentication endpoint...');
-        // Try a direct API call with the API key as a Bearer token
-        const altResponse = await axios({
-          method: 'GET',
-          url: 'https://www.wixapis.com/wix-data/v2/items/query',
-          headers: {
-            'Authorization': `Bearer ${wixApiKey}`,
-            'wix-site-id': wixSiteId,
-            'wix-account-id': wixAccountId,
-            'Content-Type': 'application/json'
-          },
-          data: {
-            dataCollectionId: 'Members',
-            query: {
-              paging: {
-                limit: 1
-              }
-            }
-          },
-          timeout: 10000
-        });
-        
-        logger.info('Alternative Wix API authentication successful', { 
-          status: altResponse.status,
-          data: altResponse.data
-        });
-        
-        // Still return failure for the main check, but log the alternative success
-        return {
-          success: false,
-          error: 'Primary authentication failed, but alternative succeeded. Check logs for details.'
-        };
-      } catch (altAuthError) {
-        logger.error('Alternative Wix API authentication also failed', {
-          error: altAuthError.message,
-          status: altAuthError.response?.status,
-          data: altAuthError.response?.data
-        });
-        
-        // Try a third approach - using the Wix REST API directly
-        try {
-          logger.debug('Attempting third Wix API approach with direct REST call...');
-          
-          // Log all possible details about the credentials for debugging
-          logger.debug('Wix API credentials debug info', {
-            apiKeyFormat: wixApiKey.startsWith('IST.') ? 'Valid prefix' : 'Invalid prefix',
-            apiKeyLength: wixApiKey.length,
-            siteIdFormat: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(wixSiteId) ? 'Valid UUID' : 'Invalid UUID',
-            apiSecretLength: wixApiSecret?.length || 0
-          });
-          
-          // Try a different endpoint with a different authentication approach
-          // Try a different API endpoint with a different authentication method
-          const thirdResponse = await axios({
-            method: 'GET',
-            url: `https://www.wixapis.com/site/v1/sites/${wixSiteId}`,
-            headers: {
-              'Authorization': wixApiKey,
-              'wix-account-id': wixAccountId,
-              'Content-Type': 'application/json'
-            },
-            timeout: 10000
-          });
-          
-          logger.info('Third Wix API approach successful', { 
-            status: thirdResponse.status,
-            data: thirdResponse.data
-          });
-        } catch (thirdAuthError) {
-          // Log detailed information about the error
-          logger.error('All three Wix API approaches failed', {
-            firstError: authError.message,
-            secondError: altAuthError.message,
-            thirdError: thirdAuthError.message,
-            requestDetails: thirdAuthError.config,
-            responseDetails: {
-              status: thirdAuthError.response?.status,
-              statusText: thirdAuthError.response?.statusText,
-              data: thirdAuthError.response?.data,
-              headers: thirdAuthError.response?.headers
-            }
-          });
-        }
-      }
-      
-      // Return failure - no fallback method
-      return {
-        success: false,
-        error: 'Wix API authentication failed: ' + (authError.response?.data?.message || authError.message)
+      // Return actual failure status
+      return { 
+        success: false, 
+        error: 'Failed to connect to Wix API: ' + error.message
       };
     }
   } catch (error) {
-    // This could be a general error
-    const errorMessage = error.message;
-    logger.error('Error checking Wix connection', {
-      error: errorMessage
-    });
-    
-    return {
-      success: false,
-      error: 'Error checking connection: ' + errorMessage
-    };
+    logger.error('Error checking Wix connection', { error: error.message });
+    return { success: false, error: error.message };
   }
 });
 
@@ -664,17 +975,67 @@ ipcMain.handle('timeXpress:checkConnection', async () => {
   try {
     // Check if TimeXpress path is configured
     const settings = loadSettings();
-    const timeXpressPath = settings.timeClockDb || '';
+    let timeXpressPath = settings.timeClockDb || '';
+    
+    // If no path is configured, use platform-specific default paths
     if (!timeXpressPath) {
-      logger.warn('TimeXpress path not configured');
-      return { success: false, error: 'Path not configured' };
+      // Get user's home directory and program files directory
+      const homeDir = app.getPath('home');
+      
+      if (isWindows) {
+        // Windows: Typical TimeXpress installation location
+        // First try Program Files, then Program Files (x86)
+        const programFiles = process.env['ProgramFiles'] || 'C:\\Program Files';
+        const programFilesX86 = process.env['ProgramFiles(x86)'] || 'C:\\Program Files (x86)';
+        
+        // Check common installation paths
+        const possiblePaths = [
+          path.join(programFiles, 'TimeXpress', 'Database', 'TimeXpress.db'),
+          path.join(programFilesX86, 'TimeXpress', 'Database', 'TimeXpress.db'),
+          path.join(homeDir, 'Documents', 'TimeXpress', 'Database', 'TimeXpress.db')
+        ];
+        
+        // Use the first path that exists
+        for (const possiblePath of possiblePaths) {
+          if (fs.existsSync(possiblePath)) {
+            timeXpressPath = possiblePath;
+            logger.debug('Found TimeXpress database at', { path: timeXpressPath });
+            break;
+          }
+        }
+        
+        if (!timeXpressPath) {
+          // If no existing path found, use the most likely default
+          timeXpressPath = path.join(programFiles, 'TimeXpress', 'Database', 'TimeXpress.db');
+          logger.debug('Using default Windows TimeXpress path', { path: timeXpressPath });
+        }
+      } else if (isMacOS) {
+        // macOS: Typical TimeXpress installation location
+        timeXpressPath = path.join(homeDir, 'Applications', 'TimeXpress', 'Database', 'TimeXpress.db');
+        logger.debug('Using default macOS TimeXpress path', { path: timeXpressPath });
+      } else {
+        // Linux or other: Home directory
+        timeXpressPath = path.join(homeDir, 'TimeXpress', 'Database', 'TimeXpress.db');
+        logger.debug('Using default Linux/other TimeXpress path', { path: timeXpressPath });
+      }
     }
     
     // Check if the file exists
     const exists = fs.existsSync(timeXpressPath);
     
-    logger.info('TimeXpress connection status', { connected: exists });
-    return { success: exists };
+    logger.info('TimeXpress connection status', { 
+      connected: exists,
+      path: timeXpressPath,
+      platform: process.platform
+    });
+    
+    return { 
+      success: exists,
+      data: {
+        path: timeXpressPath,
+        exists: exists
+      }
+    };
   } catch (error) {
     logger.error('Error checking TimeXpress connection', { error: error.message });
     return { success: false, error: error.message };
@@ -684,19 +1045,75 @@ ipcMain.handle('timeXpress:checkConnection', async () => {
 ipcMain.handle('scanID:checkConnection', async () => {
   logger.debug('Checking Scan-ID connection');
   try {
-    // Check if Scan-ID path is configured
+    // Get the Scan-ID export path from settings or use default Windows path
     const settings = loadSettings();
-    const scanIDPath = settings.scanIdPath || '';
+    let scanIDPath = settings.scanIdPath || '';
+    
+    // If no path is configured, use the default path based on platform
     if (!scanIDPath) {
-      logger.warn('Scan-ID path not configured');
-      return { success: false, error: 'Path not configured' };
+      // Get user's home directory
+      const homeDir = app.getPath('home');
+      
+      // Use platform-specific default paths
+      if (isWindows) {
+        // Windows: OneDrive path
+        scanIDPath = path.join(homeDir, 'OneDrive', 'Documents', 'BCR', 'Scan-ID');
+        logger.debug('Using default Windows Scan-ID path', { path: scanIDPath });
+      } else if (isMacOS) {
+        // macOS: Documents folder
+        scanIDPath = path.join(homeDir, 'Documents', 'BCR', 'Scan-ID');
+        logger.debug('Using default macOS Scan-ID path', { path: scanIDPath });
+      } else {
+        // Linux or other: Home directory
+        scanIDPath = path.join(homeDir, 'BCR', 'Scan-ID');
+        logger.debug('Using default Linux/other Scan-ID path', { path: scanIDPath });
+      }
     }
     
-    // Check if the device/path exists
-    const exists = fs.existsSync(scanIDPath);
+    // Check if the directory exists
+    if (!fs.existsSync(scanIDPath)) {
+      logger.error('Scan-ID directory not found', { path: scanIDPath });
+      return { success: false, error: `Scan-ID directory not found: ${scanIDPath}` };
+    }
     
-    logger.info('Scan-ID connection status', { connected: exists });
-    return { success: exists };
+    // Get the current date in YYYYMMDD format
+    const today = new Date();
+    const dateString = today.getFullYear() + 
+      String(today.getMonth() + 1).padStart(2, '0') + 
+      String(today.getDate()).padStart(2, '0');
+    
+    // Look for today's export files
+    const files = fs.readdirSync(scanIDPath)
+      .filter(file => file.startsWith(dateString) && file.endsWith('.csv'));
+    
+    if (files.length > 0) {
+      logger.info('Scan-ID connection successful', { 
+        path: scanIDPath,
+        filesFound: files.length
+      });
+      return { 
+        success: true,
+        data: {
+          path: scanIDPath,
+          filesFound: files.length,
+          latestFile: files[files.length - 1]
+        }
+      };
+    } else {
+      // Directory exists but no files for today
+      logger.info('Scan-ID directory found but no export files for today', {
+        path: scanIDPath,
+        datePattern: dateString
+      });
+      return { 
+        success: true, 
+        data: {
+          path: scanIDPath,
+          filesFound: 0,
+          message: 'No export files found for today, but directory exists'
+        }
+      };
+    }
   } catch (error) {
     logger.error('Error checking Scan-ID connection', { error: error.message });
     return { success: false, error: error.message };

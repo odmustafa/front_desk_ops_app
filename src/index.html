@@ -39,6 +39,9 @@
         <a class="nav-link" href="#" data-page="settings">
           <i class="bi bi-gear"></i> Settings
         </a>
+        <a class="nav-link debug-nav-link" href="#" data-page="debug" style="display: none;">
+          <i class="bi bi-bug"></i> Debug
+        </a>
       </nav>
       <div class="staff-info">
         <img src="assets/placeholder-profile.svg" alt="Staff Photo" class="staff-photo">
@@ -537,6 +540,10 @@
                       <label for="time-clock-db">TimeXpress Database Path</label>
                       <input type="text" class="form-control" id="time-clock-db">
                     </div>
+                    <div class="form-check mt-3">
+                      <input type="checkbox" class="form-check-input" id="developer-mode">
+                      <label class="form-check-label" for="developer-mode">Developer Mode</label>
+                    </div>
                     <div class="text-center mt-3">
                       <button type="submit" class="btn btn-primary">Save Settings</button>
                     </div>
@@ -579,6 +586,90 @@
                         </tbody>
                       </table>
                     </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Debug Page (Hidden by default) -->
+        <div id="debug" class="content-page">
+          <h2>Debug Console</h2>
+          <div class="card mb-4">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+              <h5 class="mb-0">Application Logs</h5>
+              <div>
+                <button class="btn btn-sm btn-outline-light" id="refresh-logs-btn">Refresh</button>
+                <button class="btn btn-sm btn-outline-light ms-2" id="clear-logs-btn">Clear</button>
+              </div>
+            </div>
+            <div class="card-body p-0">
+              <div class="debug-log-container">
+                <pre id="debug-log-content" class="debug-log"></pre>
+              </div>
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6">
+              <div class="card mb-4">
+                <div class="card-header bg-dark text-white">
+                  <h5 class="mb-0">Connection Status Details</h5>
+                </div>
+                <div class="card-body">
+                  <div class="table-responsive">
+                    <table class="table table-sm">
+                      <tbody>
+                        <tr>
+                          <td>Wix API</td>
+                          <td id="debug-wix-status">Unknown</td>
+                        </tr>
+                        <tr>
+                          <td>TimeXpress</td>
+                          <td id="debug-timeXpress-status">Unknown</td>
+                        </tr>
+                        <tr>
+                          <td>Scan-ID</td>
+                          <td id="debug-scanID-status">Unknown</td>
+                        </tr>
+                        <tr>
+                          <td>Database</td>
+                          <td id="debug-database-status">Unknown</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card mb-4">
+                <div class="card-header bg-dark text-white">
+                  <h5 class="mb-0">System Information</h5>
+                </div>
+                <div class="card-body">
+                  <div class="table-responsive">
+                    <table class="table table-sm">
+                      <tbody>
+                        <tr>
+                          <td>App Version</td>
+                          <td id="debug-app-version">Unknown</td>
+                        </tr>
+                        <tr>
+                          <td>Electron Version</td>
+                          <td id="debug-electron-version">Unknown</td>
+                        </tr>
+                        <tr>
+                          <td>Platform</td>
+                          <td id="debug-platform">Unknown</td>
+                        </tr>
+                        <tr>
+                          <td>Log File</td>
+                          <td id="debug-log-path">Unknown</td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </div>
@@ -657,5 +748,7 @@
   <script src="scripts/wix-settings.js"></script>
   <script src="scripts/member-check-in.js"></script>
   <script src="scripts/connection-status.js"></script>
+  <script src="scripts/debug.js"></script>
+  <script src="scripts/wix-test.js"></script>
 </body>
 </html>

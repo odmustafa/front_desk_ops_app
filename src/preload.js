@@ -11,6 +11,7 @@ contextBridge.exposeInMainWorld('app', {
     // Wix integration
     getWixMember: (memberData) => ipcRenderer.invoke('wix-get-member', memberData),
     updateWixMember: (memberData) => ipcRenderer.invoke('wix-update-member', memberData),
+    testSimpleApi: () => ipcRenderer.invoke('wix:testSimpleApi'),
     
     // ID Scanner integration
     processScanId: (scanData) => ipcRenderer.invoke('scan-id', scanData),
@@ -40,6 +41,15 @@ contextBridge.exposeInMainWorld('app', {
     
     // Announcements
     getAnnouncements: () => ipcRenderer.invoke('db-get-announcements'),
-    saveAnnouncement: (announcementData) => ipcRenderer.invoke('db-save-announcement', announcementData)
+    saveAnnouncement: (announcementData) => ipcRenderer.invoke('db-save-announcement', announcementData),
+  
+    // Debug functionality
+    getLogs: () => ipcRenderer.invoke('debug:getLogs'),
+    clearLogs: () => ipcRenderer.invoke('debug:clearLogs'),
+    getSystemInfo: () => ipcRenderer.invoke('debug:getSystemInfo'),
+  
+    // Settings
+    getDeveloperMode: () => ipcRenderer.invoke('settings:getDeveloperMode'),
+    setDeveloperMode: (enabled) => ipcRenderer.invoke('settings:setDeveloperMode', enabled)
   }
 );
