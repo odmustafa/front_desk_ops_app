@@ -6,6 +6,9 @@ const axios = require('axios');
 const logger = require('./utils/logger');
 const db = require('./database/db');
 
+// Initialize API logger to log all axios requests/responses
+require('./utils/api-logger');
+
 // Log application start
 logger.info('Application starting', { version: app.getVersion(), platform: process.platform });
 
@@ -790,183 +793,182 @@ function loadSettings() {
 // Connection Status Handlers
 ipcMain.handle('wix:checkConnection', async () => {
   logger.debug('Checking Wix connection');
+  
+  // First check basic network connectivity
+  let networkConnected = false;
   try {
-    // Check if Wix API key is configured
-    const settings = loadSettings();
+    const networkResponse = await axios.get('https://api.github.com', { 
+      timeout: 3000,
+      headers: { 'User-Agent': 'Front-Desk-Ops-App' }
+    });
+    networkConnected = true;
+    logger.debug('Network connectivity verified', { 
+      status: networkResponse.status
+    });
+  } catch (networkError) {
+    logger.error('Network connectivity test failed', { 
+      error: networkError.message,
+      code: networkError.code
+    });
     
-    // Get all Wix credentials from settings
-    const wixApiKey = settings.wixApiKey || '';
-    const wixSiteId = settings.wixSiteId || '';
-    const wixApiSecret = settings.wixApiSecret || '';
-    const wixAccountId = settings.wixAccountId || '';
-    const wixClientId = settings.wixClientId || '';
-    
-    if (!wixApiKey || !wixSiteId) {
-      logger.warn('Wix API key or Site ID not configured');
-      return { success: false, error: 'API credentials not fully configured' };
-    }
-    
-    // First, verify we have network connectivity to a reliable endpoint
-    try {
-      logger.debug('Testing network connectivity...');
-      // Use a more reliable endpoint with shorter timeout
-      const networkResponse = await axios.get('https://api.github.com', { 
-        timeout: 3000,
-        headers: { 'User-Agent': 'Front-Desk-Ops-App' }
-      });
-      logger.debug('Network connectivity verified', { 
-        status: networkResponse.status,
-        statusText: networkResponse.statusText
-      });
-    } catch (networkError) {
-      logger.error('Network connectivity test failed', { 
-        error: networkError.message,
-        code: networkError.code
-      });
-      
-      // Don't fail immediately, still try the Wix API
-      logger.debug('Continuing with Wix API check despite network test failure');
-    }
-    
-    // Now attempt to authenticate with the Wix API
-    try {
-      logger.debug('Attempting Wix API authentication...');
-      
-      // Log all Wix credentials for debugging (redacted for security)
-      logger.debug('Using Wix API credentials', {
+    return { 
+      success: false, 
+      error: 'Network connectivity issue: ' + networkError.message,
+      networkError: true
+    };
+  }
+  
+  // Load settings to check if we have Wix credentials
+  const wixApiKey = appSettings.wixApiKey || '';
+  const wixSiteId = appSettings.wixSiteId || '';
+  
+  if (!wixApiKey || !wixSiteId) {
+    logger.warn('Wix API credentials not configured');
+    return {
+      success: false,
+      error: 'Wix API credentials not fully configured',
+      missingCredentials: true,
+      details: {
         hasApiKey: !!wixApiKey,
-        hasSiteId: !!wixSiteId,
-        hasAccountId: !!wixAccountId,
-        hasClientId: !!wixClientId,
-        hasApiSecret: !!wixApiSecret,
-        apiKeyFormat: wixApiKey.substring(0, 5) + '...',
-        siteIdFormat: wixSiteId
+        hasSiteId: !!wixSiteId
+      }
+    };
+  }
+  
+  try {
+    // First try the health endpoint to check if the API is reachable
+    logger.debug('Checking Wix API health');
+    try {
+      const healthResponse = await axios({
+        method: 'GET',
+        url: 'https://www.wixapis.com/health',
+        timeout: 5000
       });
       
-      // Simplified approach - just check if we can access a basic endpoint
-      // For demonstration purposes, we'll consider the connection successful
-      // if we can make any successful request to the Wix API
+      logger.debug('Wix API health check response', { status: healthResponse.status });
+    } catch (healthError) {
+      logger.warn('Wix API health check failed', { error: healthError.message });
+      // Continue anyway as the health endpoint might not be accessible
+    }
+    
+    // Try the members endpoint with proper parameters based on Wix API documentation
+    logger.debug('Attempting Wix API authentication via members endpoint');
+    const headers = {
+      'Authorization': wixApiKey.startsWith('Bearer ') ? wixApiKey : `Bearer ${wixApiKey}`,
+      'wix-site-id': wixSiteId,
+      'Content-Type': 'application/json'
+    };
+    
+    try {
+      const membersResponse = await axios({
+        method: 'GET',
+        url: 'https://www.wixapis.com/members/v1/members',
+        headers,
+        params: {
+          'fieldSet': 'PUBLIC',
+          'paging.limit': 10
+        },
+        timeout: 10000 // Increased timeout for better reliability
+      });
       
-      // Try multiple endpoints with different authentication methods
-      let success = false;
-      let responseData = null;
+      logger.info('Wix connection successful via members endpoint', { 
+        status: membersResponse.status,
+        membersCount: membersResponse.data?.members?.length || 0 
+      });
       
-      // Approach 1: Direct API key as Authorization header
+      return { 
+        success: true,
+        data: {
+          connected: true,
+          membersCount: membersResponse.data?.members?.length || 0
+        }
+      };
+    } catch (membersError) {
+      logger.warn('Wix members endpoint failed', {
+        error: membersError.message,
+        status: membersError.response?.status,
+        data: membersError.response?.data
+      });
+      
+      // Fall back to the site endpoint
+      logger.debug('Attempting Wix API authentication via site endpoint');
       try {
-        logger.debug('Approach 1: Using API key as Authorization header');
-        const response1 = await axios({
+        const siteResponse = await axios({
           method: 'GET',
-          url: 'https://www.wixapis.com/site/v1/sites',
-          headers: {
-            'Authorization': wixApiKey,
-            'wix-site-id': wixSiteId,
-            'Content-Type': 'application/json'
-          },
-          timeout: 8000
+          url: `https://www.wixapis.com/site/v1/sites/${wixSiteId}`,
+          headers,
+          timeout: 10000 // Increased timeout for better reliability
         });
         
-        success = true;
-        responseData = response1.data;
-        logger.info('Approach 1 successful', { status: response1.status });
-      } catch (error1) {
-        logger.debug('Approach 1 failed', { error: error1.message });
+        logger.info('Wix connection successful via site endpoint', { status: siteResponse.status });
+        return { 
+          success: true, 
+          data: {
+            connected: true,
+            siteInfo: siteResponse.data?.site || {}
+          }
+        };
+      } catch (siteError) {
+        logger.warn('Wix site endpoint failed', {
+          error: siteError.message,
+          status: siteError.response?.status,
+          data: siteError.response?.data
+        });
         
-        // Approach 2: API key with Bearer prefix
+        // Try one more approach - the OAuth token endpoint
+        logger.debug('Attempting Wix API authentication via OAuth endpoint');
         try {
-          logger.debug('Approach 2: Using API key with Bearer prefix');
-          const response2 = await axios({
-            method: 'GET',
-            url: 'https://www.wixapis.com/site/v1/sites',
+          const oauthResponse = await axios({
+            method: 'POST',
+            url: 'https://www.wix.com/oauth/access',
             headers: {
-              'Authorization': `Bearer ${wixApiKey}`,
-              'wix-site-id': wixSiteId,
               'Content-Type': 'application/json'
             },
-            timeout: 8000
+            data: {
+              'grant_type': 'authorization_code',
+              'client_id': appSettings.wixClientId || '',
+              'client_secret': appSettings.wixClientSecret || '',
+              'code': wixApiKey
+            },
+            timeout: 10000 // Increased timeout for better reliability
           });
           
-          success = true;
-          responseData = response2.data;
-          logger.info('Approach 2 successful', { status: response2.status });
-        } catch (error2) {
-          logger.debug('Approach 2 failed', { error: error2.message });
-          
-          // Approach 3: OAuth token endpoint
-          try {
-            logger.debug('Approach 3: Using OAuth token endpoint');
-            const response3 = await axios({
-              method: 'POST',
-              url: 'https://www.wixapis.com/oauth/access',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              data: {
-                grant_type: 'refresh_token',
-                client_id: wixClientId,
-                client_secret: wixApiSecret,
-                refresh_token: wixApiKey
-              },
-              timeout: 8000
-            });
-            
-            success = true;
-            responseData = response3.data;
-            logger.info('Approach 3 successful', { status: response3.status });
-          } catch (error3) {
-            logger.debug('Approach 3 failed', { error: error3.message });
-            
-            // Approach 4: Members endpoint
-            try {
-              logger.debug('Approach 4: Using members endpoint');
-              const response4 = await axios({
-                method: 'GET',
-                url: 'https://www.wixapis.com/members/v1/members/count',
-                headers: {
-                  'Authorization': wixApiKey,
-                  'wix-site-id': wixSiteId,
-                  'Content-Type': 'application/json'
-                },
-                timeout: 8000
-              });
-              
-              success = true;
-              responseData = response4.data;
-              logger.info('Approach 4 successful', { status: response4.status });
-            } catch (error4) {
-              logger.debug('Approach 4 failed', { error: error4.message });
-              
-              // All connection attempts failed
-              success = false;
-              responseData = { message: 'All connection attempts failed' };
-              logger.error('All Wix API connection attempts failed');
+          logger.info('Wix connection successful via OAuth endpoint', { status: oauthResponse.status });
+          return { 
+            success: true,
+            data: {
+              connected: true,
+              authMethod: 'oauth'
             }
-          }
+          };
+        } catch (oauthError) {
+          logger.error('All Wix API authentication methods failed', {
+            membersError: membersError.message,
+            siteError: siteError.message,
+            oauthError: oauthError.message
+          });
+          
+          return { 
+            success: false, 
+            error: 'All Wix API authentication methods failed',
+            details: {
+              membersError: membersError.message,
+              siteError: siteError.message,
+              oauthError: oauthError.message
+            }
+          };
         }
       }
-      
-      return { 
-        success: true, 
-        data: {
-          connected: success,
-          message: success ? 'Successfully connected to Wix API' : 'Failed to connect to Wix API',
-          responseData: responseData
-        }
-      };
-    } catch (error) {
-      logger.error('Error in Wix API authentication process', {
-        error: error.message,
-        stack: error.stack
-      });
-      
-      // Return actual failure status
-      return { 
-        success: false, 
-        error: 'Failed to connect to Wix API: ' + error.message
-      };
     }
   } catch (error) {
-    logger.error('Error checking Wix connection', { error: error.message });
-    return { success: false, error: error.message };
+    logger.error('Error checking Wix connection', { 
+      error: error.message,
+      stack: error.stack
+    });
+    return { 
+      success: false, 
+      error: error.message
+    };
   }
 });
 
