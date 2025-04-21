@@ -321,42 +321,128 @@ function simulateScheduleData() {
   return new Promise((resolve) => {
     // Simulate network delay
     setTimeout(() => {
-      // Get current date
-      const today = new Date();
-      const dayOfWeek = today.getDay();
-      
-      // Create a week schedule starting from Monday
-      const startDate = new Date(today);
-      startDate.setDate(today.getDate() - dayOfWeek + 1);
-      
-      // Simulate schedule data
-      const schedule = [];
-      
-      for (let i = 0; i < 7; i++) {
-        const date = new Date(startDate);
-        date.setDate(startDate.getDate() + i);
-        
-        const daySchedule = {
-          date: date.toISOString().split('T')[0],
-          shifts: []
-        };
-        
-        // Add morning shift
-        daySchedule.shifts.push({
-          id: `shift${i}1`,
-          time: '9:00 AM - 2:00 PM',
-          staff: ['John Smith', 'Jane Doe']
-        });
-        
-        // Add evening shift
-        daySchedule.shifts.push({
-          id: `shift${i}2`,
-          time: '2:00 PM - 7:00 PM',
-          staff: ['Mike Johnson', 'Sarah Williams']
-        });
-        
-        schedule.push(daySchedule);
-      }
+      // Actual schedule data from Tribute Music Gallery
+      const schedule = [
+        // Monday
+        {
+          id: 'mon-day',
+          day: 'Monday',
+          shift: 'Day',
+          time: '10:00 AM - 10:00 PM',
+          register: '#open',
+          rover: 'Omar'
+        },
+        {
+          id: 'mon-night',
+          day: 'Monday',
+          shift: 'Night',
+          time: '10:00 PM - 10:00 AM',
+          register: 'Kendee',
+          rover: 'Brandon'
+        },
+        // Tuesday
+        {
+          id: 'tue-day',
+          day: 'Tuesday',
+          shift: 'Day',
+          time: '10:00 AM - 10:00 PM',
+          register: '#open',
+          rover: 'Omar'
+        },
+        {
+          id: 'tue-night',
+          day: 'Tuesday',
+          shift: 'Night',
+          time: '10:00 PM - 10:00 AM',
+          register: 'Kendee',
+          rover: 'Brandon'
+        },
+        // Wednesday
+        {
+          id: 'wed-day',
+          day: 'Wednesday',
+          shift: 'Day',
+          time: '10:00 AM - 10:00 PM',
+          register: '#open',
+          rover: 'Omar'
+        },
+        {
+          id: 'wed-night',
+          day: 'Wednesday',
+          shift: 'Night',
+          time: '10:00 PM - 10:00 AM',
+          register: 'Kendee',
+          rover: 'Brandon'
+        },
+        // Thursday
+        {
+          id: 'thu-day',
+          day: 'Thursday',
+          shift: 'Day',
+          time: '10:00 AM - 10:00 PM',
+          register: '#open',
+          rover: 'Joe'
+        },
+        {
+          id: 'thu-night',
+          day: 'Thursday',
+          shift: 'Night',
+          time: '10:00 PM - 10:00 AM',
+          register: 'Kendee',
+          rover: 'Brandon'
+        },
+        // Friday
+        {
+          id: 'fri-day',
+          day: 'Friday',
+          shift: 'Day',
+          time: '10:00 AM - 10:00 PM',
+          register: '#open',
+          rover: 'Joe'
+        },
+        {
+          id: 'fri-night',
+          day: 'Friday',
+          shift: 'Night',
+          time: '10:00 PM - 10:00 AM',
+          register: 'Kendee',
+          rover: 'Will'
+        },
+        // Saturday
+        {
+          id: 'sat-day',
+          day: 'Saturday',
+          shift: 'Day',
+          time: '10:00 AM - 10:00 PM',
+          register: '#open',
+          rover: 'Joe'
+        },
+        {
+          id: 'sat-night',
+          day: 'Saturday',
+          shift: 'Night',
+          time: '10:00 PM - 10:00 AM',
+          register: 'Kendee',
+          rover: 'Brandon'
+        },
+        // Sunday
+        {
+          id: 'sun-day',
+          day: 'Sunday',
+          shift: 'Day',
+          time: '10:00 AM - 10:00 PM',
+          register: 'Rachel',
+          rover: 'Will'
+        },
+        {
+          id: 'sun-night',
+          day: 'Sunday',
+          shift: 'Night',
+          time: '10:00 PM - 10:00 AM',
+          register: 'Liz',
+          rover: 'Paul'
+        }
+      ];
       
       resolve(schedule);
     }, 500);
@@ -381,62 +467,171 @@ function displaySchedule(schedule) {
   
   // Create schedule table
   const table = document.createElement('table');
-  table.className = 'table table-bordered';
+  table.className = 'table table-bordered table-striped';
   
   // Create table header
   const thead = document.createElement('thead');
-  const headerRow = document.createElement('tr');
+  thead.className = 'table-dark';
   
-  // Add date headers
-  schedule.forEach(day => {
-    const th = document.createElement('th');
-    const date = new Date(day.date);
-    th.innerHTML = `${getDayName(date.getDay())}<br><small>${formatDate(day.date)}</small>`;
-    
-    // Highlight current day
-    const today = new Date();
-    if (date.toDateString() === today.toDateString()) {
-      th.className = 'bg-primary text-white';
-    }
-    
-    headerRow.appendChild(th);
-  });
-  
-  thead.appendChild(headerRow);
+  // Add header row with day and shift type
+  const headerRow1 = document.createElement('tr');
+  headerRow1.innerHTML = `
+    <th>Day</th>
+    <th>Shift</th>
+    <th>Register</th>
+    <th>Rover</th>
+  `;
+  thead.appendChild(headerRow1);
   table.appendChild(thead);
   
   // Create table body
   const tbody = document.createElement('tbody');
   
-  // Find the maximum number of shifts in a day
-  const maxShifts = Math.max(...schedule.map(day => day.shifts.length));
+  // Group schedule by day
+  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const dayShifts = {};
   
-  // Create rows for each shift
-  for (let i = 0; i < maxShifts; i++) {
-    const row = document.createElement('tr');
+  days.forEach(day => {
+    dayShifts[day] = {
+      day: day,
+      shifts: []
+    };
+  });
+  
+  // Organize shifts by day
+  schedule.forEach(shift => {
+    if (dayShifts[shift.day]) {
+      dayShifts[shift.day].shifts.push(shift);
+    }
+  });
+  
+  // Create rows for each day and shift
+  days.forEach(day => {
+    const dayData = dayShifts[day];
+    const dayShifts = dayData.shifts.sort((a, b) => {
+      // Sort by shift (Day first, then Night)
+      return a.shift === 'Day' ? -1 : 1;
+    });
     
-    // Add cells for each day
-    schedule.forEach(day => {
-      const cell = document.createElement('td');
+    // If no shifts for this day, add empty row
+    if (dayShifts.length === 0) {
+      const emptyRow = document.createElement('tr');
+      emptyRow.innerHTML = `
+        <td>${day}</td>
+        <td colspan="3" class="text-center text-muted">No shifts scheduled</td>
+      `;
+      tbody.appendChild(emptyRow);
+      return;
+    }
+    
+    // Add rows for each shift
+    dayShifts.forEach((shift, index) => {
+      const row = document.createElement('tr');
       
-      if (i < day.shifts.length) {
-        const shift = day.shifts[i];
-        cell.innerHTML = `
-          <div class="shift-time">${shift.time}</div>
-          <div class="shift-staff">
-            ${shift.staff.map(name => `<div>${name}</div>`).join('')}
-          </div>
+      // Highlight current day
+      const today = new Date();
+      const dayOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][today.getDay()];
+      if (day === dayOfWeek) {
+        row.className = 'table-primary';
+      }
+      
+      // For first shift of the day, show the day name
+      if (index === 0) {
+        row.innerHTML = `
+          <td rowspan="${dayShifts.length}">${day}</td>
+          <td>${shift.shift}</td>
+          <td>${shift.register}</td>
+          <td>${shift.rover}</td>
+        `;
+      } else {
+        row.innerHTML = `
+          <td>${shift.shift}</td>
+          <td>${shift.register}</td>
+          <td>${shift.rover}</td>
         `;
       }
       
-      row.appendChild(cell);
+      tbody.appendChild(row);
     });
-    
-    tbody.appendChild(row);
-  }
+  });
   
   table.appendChild(tbody);
+  
+  // Add shift hours information
+  const shiftInfo = document.createElement('div');
+  shiftInfo.className = 'mt-3 card';
+  shiftInfo.innerHTML = `
+    <div class="card-header bg-dark text-white">Shift Hours</div>
+    <div class="card-body">
+      <table class="table table-sm">
+        <thead>
+          <tr>
+            <th>Shift</th>
+            <th>Hours</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Day shift</td>
+            <td>10AM to 10PM</td>
+          </tr>
+          <tr>
+            <td>Night shift</td>
+            <td>10PM to 10AM</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  `;
+  
+  // Add pay scale information
+  const payInfo = document.createElement('div');
+  payInfo.className = 'mt-3 card';
+  payInfo.innerHTML = `
+    <div class="card-header bg-dark text-white">Pay Scale</div>
+    <div class="card-body">
+      <table class="table table-sm">
+        <thead>
+          <tr>
+            <th>Total Shifts (per week)</th>
+            <th>Pay (per shift)</th>
+            <th>Total Pay (per week)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>2</td>
+            <td>$75</td>
+            <td>$150</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td>$75</td>
+            <td>$225</td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td>$75</td>
+            <td>$300</td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td>$80</td>
+            <td>$400</td>
+          </tr>
+          <tr>
+            <td>6</td>
+            <td>$83</td>
+            <td>$500</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  `;
+  
   staffSchedule.appendChild(table);
+  staffSchedule.appendChild(shiftInfo);
+  staffSchedule.appendChild(payInfo);
 }
 
 /**
@@ -480,39 +675,97 @@ function simulateStaffData() {
   return new Promise((resolve) => {
     // Simulate network delay
     setTimeout(() => {
-      // Simulate staff data
+      // Actual staff data from Tribute Music Gallery
       const staff = [
         {
           id: 'staff1',
-          name: 'John Smith',
-          position: 'Front Desk Manager',
-          contact: 'john.smith@example.com',
-          phone: '(555) 123-4567',
-          status: 'Active'
+          name: 'Kendee',
+          position: 'Front Desk Staff',
+          contact: 'kendee@tributemusicgallery.com',
+          phone: '',
+          status: 'Active',
+          shifts: 6,
+          payRate: '$83'
         },
         {
           id: 'staff2',
-          name: 'Jane Doe',
-          position: 'Front Desk Associate',
-          contact: 'jane.doe@example.com',
-          phone: '(555) 234-5678',
-          status: 'Active'
+          name: 'Molly',
+          position: 'Front Desk Staff',
+          contact: 'molly@tributemusicgallery.com',
+          phone: '',
+          status: 'Active',
+          shifts: 0,
+          payRate: '$75'
         },
         {
           id: 'staff3',
-          name: 'Mike Johnson',
-          position: 'Event Coordinator',
-          contact: 'mike.johnson@example.com',
-          phone: '(555) 345-6789',
-          status: 'Active'
+          name: 'Rachel',
+          position: 'Front Desk Staff',
+          contact: 'rachel@tributemusicgallery.com',
+          phone: '',
+          status: 'Active',
+          shifts: 1,
+          payRate: '$75'
         },
         {
           id: 'staff4',
-          name: 'Sarah Williams',
-          position: 'Membership Coordinator',
-          contact: 'sarah.williams@example.com',
-          phone: '(555) 456-7890',
-          status: 'On Leave'
+          name: 'Liz',
+          position: 'Front Desk Staff',
+          contact: 'liz@tributemusicgallery.com',
+          phone: '',
+          status: 'Active',
+          shifts: 1,
+          payRate: '$75'
+        },
+        {
+          id: 'staff5',
+          name: 'Omar',
+          position: 'Front Desk Staff',
+          contact: 'omar@tributemusicgallery.com',
+          phone: '',
+          status: 'Active',
+          shifts: 3,
+          payRate: '$75'
+        },
+        {
+          id: 'staff6',
+          name: 'Brandon',
+          position: 'Front Desk Staff',
+          contact: 'brandon@tributemusicgallery.com',
+          phone: '',
+          status: 'Active',
+          shifts: 5,
+          payRate: '$80'
+        },
+        {
+          id: 'staff7',
+          name: 'Joe',
+          position: 'Front Desk Staff',
+          contact: 'joe@tributemusicgallery.com',
+          phone: '',
+          status: 'Active',
+          shifts: 3,
+          payRate: '$75'
+        },
+        {
+          id: 'staff8',
+          name: 'Will',
+          position: 'Front Desk Staff',
+          contact: 'will@tributemusicgallery.com',
+          phone: '',
+          status: 'Active',
+          shifts: 2,
+          payRate: '$75'
+        },
+        {
+          id: 'staff9',
+          name: 'Paul',
+          position: 'Front Desk Staff',
+          contact: 'paul@tributemusicgallery.com',
+          phone: '',
+          status: 'Active',
+          shifts: 1,
+          payRate: '$75'
         }
       ];
       

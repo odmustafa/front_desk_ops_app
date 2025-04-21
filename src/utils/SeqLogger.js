@@ -6,6 +6,9 @@ const axios = require('axios');
 const os = require('os');
 const { app } = require('electron');
 
+// Ensure API logger is initialized
+require('./api-logger');
+
 class SeqLogger {
   constructor(options = {}) {
     this.url = options.url || 'http://localhost:5341';
