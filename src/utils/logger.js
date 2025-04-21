@@ -1,12 +1,32 @@
 /**
  * Logger Utility for Front Desk Ops App
- * Handles console logging and file logging with daily rotation
+ * Handles console logging, file logging with daily rotation, and Seq logging
  */
 
 const fs = require('fs');
 const path = require('path');
 const electron = require('electron');
 const app = electron.app || electron.remote.app;
+
+// Try to load Seq bridge (will be available after app is ready)
+let seqBridge = null;
+let seqBridgeLoaded = false;
+
+// We'll try to load the Seq bridge after a delay to avoid circular dependencies
+const loadSeqBridge = () => {
+  try {
+    if (!seqBridgeLoaded) {
+      seqBridge = require('./seq-bridge');
+      seqBridgeLoaded = true;
+      console.log('Seq bridge loaded successfully');
+    }
+  } catch (error) {
+    console.error('Failed to load Seq bridge:', error.message);
+  }
+};
+
+// Try to load after a delay to ensure app is initialized
+setTimeout(loadSeqBridge, 3000);
 
 // Log levels
 const LOG_LEVELS = {
@@ -118,6 +138,37 @@ function log(level, message, data) {
   
   // Log to file
   writeToFile(formattedMessage);
+  
+  // Log to Seq if bridge is loaded
+  if (seqBridgeLoaded && seqBridge) {
+    try {
+      seqBridge.logToSeq(level, message, data);
+    } catch (error) {
+      console.error('Error sending log to Seq:', error.message);
+    }
+  }
+}
+
+/**
+ * Check Seq connection status
+ * @returns {Promise<Object>} Connection status
+ */
+async function checkSeqConnection() {
+  if (seqBridgeLoaded && seqBridge) {
+    return await seqBridge.checkSeqConnection();
+  }
+  return { connected: false, enabled: false, message: 'Seq bridge not loaded' };
+}
+
+/**
+ * Get Seq connection status
+ * @returns {Object} Connection status
+ */
+function getSeqConnectionStatus() {
+  if (seqBridgeLoaded && seqBridge) {
+    return seqBridge.getSeqConnectionStatus();
+  }
+  return { connected: false, enabled: false, message: 'Seq bridge not loaded' };
 }
 
 // Exported logging functions
@@ -127,5 +178,7 @@ module.exports = {
   warn: (message, data) => log(LOG_LEVELS.WARN, message, data),
   error: (message, data) => log(LOG_LEVELS.ERROR, message, data),
   LOG_LEVELS,
-  getCurrentLogFiles
+  getCurrentLogFiles,
+  checkSeqConnection,
+  getSeqConnectionStatus
 };

@@ -1,0 +1,7 @@
+{
+  "seqLoggingEnabled": true,
+  "seqUrl": "https://tributeseq.azurewebsites.net",
+  "seqApiKey": "4lc9OkvwKOrZkk1TSKHI",
+  "seqMinLogLevel": "debug",
+  "appName": "FrontDeskOps"
+}

@@ -16,6 +16,7 @@ const wixStatusDot = document.getElementById('wix-status-dot');
 const timeXpressStatusDot = document.getElementById('timeXpress-status-dot');
 const scanIDStatusDot = document.getElementById('scanID-status-dot');
 const databaseStatusDot = document.getElementById('database-status-dot');
+const seqStatusDot = document.getElementById('seq-status-dot');
 const lastUpdatedText = document.getElementById('connection-last-updated');
 
 // Connection status state
@@ -24,6 +25,7 @@ const connectionState = {
   timeXpress: CONNECTION_STATUS.UNKNOWN,
   scanID: CONNECTION_STATUS.UNKNOWN,
   database: CONNECTION_STATUS.UNKNOWN,
+  seq: CONNECTION_STATUS.UNKNOWN,
   lastUpdated: null
 };
 
@@ -36,6 +38,7 @@ function initializeConnectionStatus() {
   updateConnectionStatus('timeXpress', CONNECTION_STATUS.UNKNOWN);
   updateConnectionStatus('scanID', CONNECTION_STATUS.UNKNOWN);
   updateConnectionStatus('database', CONNECTION_STATUS.UNKNOWN);
+  updateConnectionStatus('seq', CONNECTION_STATUS.UNKNOWN);
   
   // Start periodic status checks
   checkConnectionStatus();
@@ -60,6 +63,9 @@ async function checkConnectionStatus() {
     
     // Check database connection
     checkDatabaseConnection();
+    
+    // Check Seq connection
+    checkSeqConnection();
     
     // Update last checked time
     updateLastCheckedTime();
@@ -153,8 +159,29 @@ async function checkDatabaseConnection() {
 }
 
 /**
+ * Check Seq connection
+ */
+async function checkSeqConnection() {
+  try {
+    updateConnectionStatus('seq', CONNECTION_STATUS.CONNECTING);
+    
+    // Try to connect to Seq server
+    const result = await window.app.ipcRenderer.invoke('seq:checkConnection');
+    
+    if (result.success) {
+      updateConnectionStatus('seq', CONNECTION_STATUS.CONNECTED);
+    } else {
+      updateConnectionStatus('seq', CONNECTION_STATUS.DISCONNECTED);
+    }
+  } catch (error) {
+    console.error('Error checking Seq connection:', error);
+    updateConnectionStatus('seq', CONNECTION_STATUS.DISCONNECTED);
+  }
+}
+
+/**
  * Update connection status in UI
- * @param {string} service - The service to update (wix, timeXpress, scanID, database)
+ * @param {string} service - The service to update (wix, timeXpress, scanID, database, seq)
  * @param {string} status - The status to set (connected, connecting, disconnected, unknown)
  */
 function updateConnectionStatus(service, status) {
@@ -175,6 +202,9 @@ function updateConnectionStatus(service, status) {
       break;
     case 'database':
       statusDot = databaseStatusDot;
+      break;
+    case 'seq':
+      statusDot = seqStatusDot;
       break;
     default:
       return;

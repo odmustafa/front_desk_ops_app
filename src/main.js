@@ -1140,3 +1140,35 @@ ipcMain.handle('db:checkConnection', async () => {
     return { success: false, error: error.message };
   }
 });
+
+ipcMain.handle('seq:checkConnection', async () => {
+  logger.debug('Checking Seq connection');
+  try {
+    // Use the updated logger's Seq connection check
+    const status = await logger.checkSeqConnection();
+    
+    if (status.connected) {
+      logger.info('Seq connection successful', { url: status.url });
+      return { 
+        success: true,
+        data: {
+          url: status.url,
+          connected: status.connected,
+          enabled: status.enabled
+        }
+      };
+    } else {
+      logger.warn('Seq connection failed', { error: status.error || status.message });
+      return { 
+        success: false, 
+        error: status.error || status.message 
+      };
+    }
+  } catch (error) {
+    logger.error('Error checking Seq connection', { error: error.message });
+    return { 
+      success: false, 
+      error: error.message 
+    };
+  }
+});
