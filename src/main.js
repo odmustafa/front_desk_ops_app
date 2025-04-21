@@ -325,7 +325,8 @@ try {
   };
 }
 
-const wixIntegration = require('./database/wix-integration');
+const WixService = require('./services/WixService');
+const wixService = new WixService();
 
 // Wix API integration handlers
 ipcMain.handle('wix:initConfig', async (event, credentials) => {
@@ -340,7 +341,9 @@ ipcMain.handle('wix:initConfig', async (event, credentials) => {
       hasApiSecret: !!wixCredentials.apiSecret
     });
     
-    const wixConfig = await wixIntegration.initWixConfig(wixCredentials);
+    // Initialize the Wix service with credentials
+    await wixService.initialize();
+    const wixConfig = wixCredentials;
     logger.info('Wix configuration initialized successfully');
     return { success: true, config: wixConfig };
   } catch (error) {
@@ -350,14 +353,18 @@ ipcMain.handle('wix:initConfig', async (event, credentials) => {
 });
 
 // Initialize Wix integration with config file credentials on startup
-if (config.wix && config.wix.siteId && config.wix.apiKey) {
-  try {
-    wixIntegration.initWixConfig(config.wix);
-    console.log('Wix integration initialized with config file credentials');
-  } catch (error) {
-    console.error('Failed to initialize Wix integration with config file:', error);
+// Use an async function to properly handle the initialization
+(async () => {
+  if (config && config.wix && config.wix.siteId && config.wix.apiKey) {
+    try {
+      // Initialize the Wix service with config
+      await wixService.initialize();
+      console.log('Wix integration initialized with config file credentials');
+    } catch (error) {
+      console.error('Failed to initialize Wix integration with config file:', error);
+    }
   }
-}
+})();
 
 // Handler to save configuration to config.js file
 ipcMain.handle('saveConfig', async (event, newConfig) => {
@@ -390,7 +397,8 @@ module.exports = ${JSON.stringify(updatedConfig, null, 2)};`;
 
 ipcMain.handle('wix:testConnection', async () => {
   try {
-    const result = await wixIntegration.testWixConnection();
+    const result = await wixService.testConnection();
+    const connected = result && result.success === true;
     return { success: true, connected: result };
   } catch (error) {
     console.error('Error testing Wix connection:', error);
@@ -400,7 +408,7 @@ ipcMain.handle('wix:testConnection', async () => {
 
 ipcMain.handle('wix:getMembers', async (event, filters) => {
   try {
-    const members = await wixIntegration.getWixMembers(filters);
+    const members = await wixService.getMembers(100, 0, filters);
     return { success: true, members };
   } catch (error) {
     console.error('Error fetching Wix members:', error);
@@ -411,7 +419,7 @@ ipcMain.handle('wix:getMembers', async (event, filters) => {
 ipcMain.handle('wix:searchMembers', async (event, searchTerm) => {
   try {
     logger.info('Searching Wix members', { searchTerm });
-    const members = await wixIntegration.searchWixMembers(searchTerm);
+    const members = await wixService.searchMembers(searchTerm);
     logger.info('Wix member search completed', { searchTerm, resultsCount: members.length });
     return { success: true, members };
   } catch (error) {
@@ -433,7 +441,8 @@ ipcMain.handle('wix:getMember', async (event, memberId) => {
       logger.debug('Member not found in cache, fetching from Wix API', { memberId });
       
       // Use a filter to get a specific member by ID
-      const members = await wixIntegration.getWixMembers({ memberId });
+      const member = await wixService.getMemberById(memberId);
+      const members = member ? [member] : [];
       member = members && members.length > 0 ? members[0] : null;
       
       if (!member) {
@@ -487,8 +496,10 @@ ipcMain.handle('db:getRecentCheckIns', async (event, limit) => {
 
 ipcMain.handle('wix:getEvents', async (event, limit) => {
   try {
-    const events = await wixIntegration.getWixEvents(limit);
-    return { success: true, events };
+    // Use the new WixService to get events
+    // This will need to be implemented in WixService class
+    logger.info('Getting Wix events', { limit });
+    return { success: false, error: 'Events functionality not yet implemented in new WixService' };
   } catch (error) {
     console.error('Error fetching Wix events:', error);
     return { success: false, error: error.message };

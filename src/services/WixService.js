@@ -3,21 +3,56 @@
  * Handles integration with Wix API for member management
  */
 const axios = require('axios');
-const Logger = require('../core/Logger');
-const Settings = require('../core/Settings');
+const fs = require('fs');
+const path = require('path');
+const { app } = require('electron');
 
-// Ensure API logger is initialized
-require('../utils/api-logger');
+// Simple console logger to avoid circular dependencies
+function log(level, message, data = {}) {
+  console.log(`[${new Date().toISOString()}] [${level}] [WixService] ${message}`, data);
+}
 
 class WixService {
   constructor() {
-    this.logger = new Logger('WixService');
-    this.settings = new Settings();
     this.baseUrl = 'https://www.wixapis.com';
     this.authUrl = 'https://www.wix.com/oauth/access';
     this.timeout = 30000; // Increased timeout for better reliability
     this.token = null;
     this.tokenExpiry = null;
+    
+    // Load settings from config file
+    this.settings = this.loadSettings();
+  }
+  
+  /**
+   * Load settings from storage
+   */
+  loadSettings() {
+    try {
+      // Default settings
+      const defaultSettings = {
+        wixApiKey: '',
+        wixSiteId: '',
+        wixApiSecret: '',
+        wixClientId: '',
+        wixAccountId: ''
+      };
+      
+      // Try to load from config file
+      const configPath = path.join(__dirname, '..', 'config', 'settings.json');
+      
+      if (fs.existsSync(configPath)) {
+        log('DEBUG', 'Loading settings from default file', { path: configPath });
+        const configData = fs.readFileSync(configPath, 'utf8');
+        const configSettings = JSON.parse(configData);
+        return { ...defaultSettings, ...configSettings };
+      }
+      
+      return defaultSettings;
+    } catch (error) {
+      log('ERROR', 'Failed to load settings', { error: error.message });
+      return {};
+    }
   }
 
   /**
@@ -25,11 +60,11 @@ class WixService {
    */
   async initialize() {
     try {
-      this.logger.info('Initializing Wix service');
+      log('INFO', 'Initializing Wix service');
       await this.authenticate();
       return true;
     } catch (error) {
-      this.logger.error('Failed to initialize Wix service', { error: error.message });
+      log('ERROR', 'Failed to initialize Wix service', { error: error.message });
       return false;
     }
   }
@@ -39,46 +74,46 @@ class WixService {
    * Tries multiple authentication methods in sequence
    */
   async authenticate() {
-    this.logger.debug('Authenticating with Wix API');
+    log('DEBUG', 'Authenticating with Wix API');
     
     try {
       // Try direct API key authentication first
       try {
         const result = await this.authenticateWithApiKey();
         if (result) {
-          this.logger.info('Authenticated with Wix API using API key');
+          log('INFO', 'Authenticated with Wix API using API key');
           return true;
         }
       } catch (apiKeyError) {
-        this.logger.debug('API key authentication failed', { error: apiKeyError.message });
+        log('DEBUG', 'API key authentication failed', { error: apiKeyError.message });
       }
       
       // Try OAuth token endpoint next
       try {
         const oauthResult = await this.authenticateWithOAuth();
         if (oauthResult) {
-          this.logger.info('Authenticated with Wix API using OAuth');
+          log('INFO', 'Authenticated with Wix API using OAuth');
           return true;
         }
       } catch (oauthError) {
-        this.logger.debug('OAuth authentication failed', { error: oauthError.message });
+        log('DEBUG', 'OAuth authentication failed', { error: oauthError.message });
       }
       
       // Try bearer token authentication
       try {
         const bearerResult = await this.authenticateWithBearerToken();
         if (bearerResult) {
-          this.logger.info('Authenticated with Wix API using bearer token');
+          log('INFO', 'Authenticated with Wix API using bearer token');
           return true;
         }
       } catch (bearerError) {
-        this.logger.debug('Bearer token authentication failed', { error: bearerError.message });
+        log('DEBUG', 'Bearer token authentication failed', { error: bearerError.message });
       }
       
-      this.logger.error('All Wix API authentication methods failed');
+      log('ERROR', 'All Wix API authentication methods failed');
       return false;
     } catch (error) {
-      this.logger.error('Authentication error', { 
+      log('ERROR', 'Authentication error', { 
         error: error.message, 
         stack: error.stack
       });
@@ -92,16 +127,15 @@ class WixService {
    */
   async authenticateWithApiKey() {
     try {
-      const settings = this.settings.getSettings();
-      const apiKey = settings.wixApiKey;
-      const siteId = settings.wixSiteId;
+      const apiKey = this.settings.wixApiKey;
+      const siteId = this.settings.wixSiteId;
       
       if (!apiKey || !siteId) {
-        this.logger.warn('No API key or site ID configured');
+        log('WARN', 'No API key or site ID configured');
         return false;
       }
       
-      this.logger.debug('Authenticating with API key');
+      log('DEBUG', 'Authenticating with API key');
       
       // Create headers with API key
       // Wix API expects the API key as a Bearer token
@@ -114,7 +148,7 @@ class WixService {
       // Try multiple endpoints for authentication
       // First try the members endpoint which is documented in the Wix API
       try {
-        this.logger.debug('Trying members endpoint for authentication');
+        log('DEBUG', 'Trying members endpoint for authentication');
         const membersResponse = await axios({
           method: 'get',
           url: `${this.baseUrl}/members/v1/members`,
@@ -127,7 +161,7 @@ class WixService {
         });
         
         if (membersResponse.status === 200) {
-          this.logger.info('Successfully authenticated with API key via members endpoint', {
+          log('INFO', 'Successfully authenticated with API key via members endpoint', {
             siteId,
             membersCount: membersResponse.data?.members?.length || 0
           });
@@ -136,48 +170,16 @@ class WixService {
           return true;
         }
       } catch (membersError) {
-        this.logger.debug('Members endpoint authentication failed', { 
+        log('ERROR', 'All API endpoints failed for authentication', { 
           error: membersError.message,
           status: membersError.response?.status,
           data: membersError.response?.data
         });
         
-        // Fall back to site endpoint
-        try {
-          this.logger.debug('Trying site endpoint for authentication');
-          const siteResponse = await axios({
-            method: 'get',
-            url: `${this.baseUrl}/site/v1/sites/${siteId}`,
-            headers,
-            timeout: this.timeout
-          });
-          
-          if (siteResponse.status === 200) {
-            this.logger.info('Successfully authenticated with API key via site endpoint', {
-              siteId,
-              siteName: siteResponse.data?.site?.siteDisplayName || 'Unknown'
-            });
-            this.token = apiKey;
-            this.tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
-            return true;
-          }
-        } catch (siteError) {
-          this.logger.debug('Site endpoint authentication failed', { 
-            error: siteError.message,
-            status: siteError.response?.status,
-            data: siteError.response?.data
-          });
-        }
+        return false;
       }
-      
-      this.logger.warn('All API key authentication methods failed');
-      return false;
     } catch (error) {
-      this.logger.debug('API key authentication failed', { 
-        error: error.message,
-        status: error.response?.status,
-        data: error.response?.data
-      });
+      log('ERROR', 'API key authentication failed', { error: error.message });
       return false;
     }
   }
@@ -188,16 +190,15 @@ class WixService {
    */
   async authenticateWithOAuth() {
     try {
-      const settings = this.settings.getSettings();
-      const clientId = settings.wixClientId;
-      const clientSecret = settings.wixApiSecret;
+      const clientId = this.settings.wixClientId;
+      const clientSecret = this.settings.wixApiSecret;
       
       if (!clientId || !clientSecret) {
-        this.logger.warn('No OAuth credentials configured');
+        log('WARN', 'No OAuth credentials configured');
         return false;
       }
       
-      this.logger.debug('Authenticating with OAuth');
+      log('DEBUG', 'Authenticating with OAuth');
       
       // Request body for OAuth token
       const data = {
@@ -222,11 +223,7 @@ class WixService {
       
       return false;
     } catch (error) {
-      this.logger.debug('OAuth authentication failed', { 
-        error: error.message,
-        status: error.response?.status,
-        data: error.response?.data
-      });
+      log('ERROR', 'OAuth authentication failed', { error: error.message });
       return false;
     }
   }
@@ -237,20 +234,19 @@ class WixService {
    */
   async authenticateWithBearerToken() {
     try {
-      const settings = this.settings.getSettings();
-      const apiKey = settings.wixApiKey;
+      const apiKey = this.settings.wixApiKey;
       
       if (!apiKey) {
-        this.logger.warn('No API key configured for bearer token');
+        log('WARN', 'No API key configured for bearer token');
         return false;
       }
       
-      this.logger.debug('Authenticating with bearer token');
+      log('DEBUG', 'Authenticating with bearer token');
       
       // Create headers with bearer token
       const headers = {
         'Authorization': `Bearer ${apiKey}`,
-        'wix-account-id': settings.wixAccountId,
+        'wix-account-id': this.settings.wixAccountId,
         'Content-Type': 'application/json'
       };
       
@@ -270,11 +266,7 @@ class WixService {
       
       return false;
     } catch (error) {
-      this.logger.debug('Bearer token authentication failed', { 
-        error: error.message,
-        status: error.response?.status,
-        data: error.response?.data
-      });
+      log('ERROR', 'Bearer token authentication failed', { error: error.message });
       return false;
     }
   }
@@ -299,13 +291,11 @@ class WixService {
         await this.authenticate();
       }
       
-      const settings = this.settings.getSettings();
-      
       // Create headers
       const headers = {
         'Authorization': this.token.startsWith('Bearer ') ? this.token : `Bearer ${this.token}`,
-        'wix-site-id': settings.wixSiteId,
-        'wix-account-id': settings.wixAccountId,
+        'wix-site-id': this.settings.wixSiteId,
+        'wix-account-id': this.settings.wixAccountId,
         'Content-Type': 'application/json'
       };
       
@@ -318,14 +308,14 @@ class WixService {
       });
       
       if (response.status === 200 && response.data.members) {
-        this.logger.info('Retrieved members from Wix', { count: response.data.members.length });
+        log('INFO', 'Retrieved members from Wix', { count: response.data.members.length });
         return response.data.members;
       }
       
-      this.logger.warn('Failed to get members', { status: response.status });
+      log('WARN', 'Failed to get members', { status: response.status });
       return [];
     } catch (error) {
-      this.logger.error('Error getting members', { 
+      log('ERROR', 'Error getting members', { 
         error: error.message,
         status: error.response?.status,
         data: error.response?.data
@@ -333,7 +323,7 @@ class WixService {
       
       // Try to re-authenticate on error
       if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-        this.logger.debug('Authentication expired, re-authenticating');
+        log('DEBUG', 'Authentication expired, re-authenticating');
         await this.authenticate();
       }
       
@@ -352,17 +342,14 @@ class WixService {
         await this.authenticate();
       }
       
-      const settings = this.settings.getSettings();
-      
       // Create headers
       const headers = {
         'Authorization': this.token.startsWith('Bearer ') ? this.token : `Bearer ${this.token}`,
-        'wix-site-id': settings.wixSiteId,
+        'wix-site-id': this.settings.wixSiteId,
         'Content-Type': 'application/json'
       };
       
       // Get member
-      // Based on Wix API documentation: https://dev.wix.com/docs/rest/crm/members-contacts/members/members/get-member
       const response = await axios({
         method: 'get',
         url: `${this.baseUrl}/members/v1/members/${memberId}`,
@@ -374,14 +361,14 @@ class WixService {
       });
       
       if (response.status === 200 && response.data.member) {
-        this.logger.info('Retrieved member from Wix', { id: memberId });
+        log('INFO', 'Retrieved member from Wix', { id: memberId });
         return response.data.member;
       }
       
-      this.logger.warn('Failed to get member', { status: response.status, id: memberId });
+      log('WARN', 'Failed to get member', { status: response.status, id: memberId });
       return null;
     } catch (error) {
-      this.logger.error('Error getting member by ID', { 
+      log('ERROR', 'Error getting member by ID', { 
         error: error.message,
         id: memberId,
         status: error.response?.status,
@@ -390,7 +377,7 @@ class WixService {
       
       // Try to re-authenticate on error
       if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-        this.logger.debug('Authentication expired, re-authenticating');
+        log('DEBUG', 'Authentication expired, re-authenticating');
         await this.authenticate();
       }
       
@@ -410,17 +397,14 @@ class WixService {
         await this.authenticate();
       }
       
-      const settings = this.settings.getSettings();
-      
       // Create headers
       const headers = {
         'Authorization': this.token.startsWith('Bearer ') ? this.token : `Bearer ${this.token}`,
-        'wix-site-id': settings.wixSiteId,
+        'wix-site-id': this.settings.wixSiteId,
         'Content-Type': 'application/json'
       };
       
       // Search members
-      // Based on Wix API documentation: https://dev.wix.com/docs/rest/crm/members-contacts/members/members/search-members
       const response = await axios({
         method: 'post',
         url: `${this.baseUrl}/members/v1/members/search`,
@@ -433,17 +417,17 @@ class WixService {
       });
       
       if (response.status === 200 && response.data.members) {
-        this.logger.info('Searched members in Wix', { 
+        log('INFO', 'Searched members in Wix', { 
           query, 
           count: response.data.members.length 
         });
         return response.data.members;
       }
       
-      this.logger.warn('Failed to search members', { status: response.status, query });
+      log('WARN', 'Failed to search members', { status: response.status, query });
       return [];
     } catch (error) {
-      this.logger.error('Error searching members', { 
+      log('ERROR', 'Error searching members', { 
         error: error.message,
         query,
         status: error.response?.status,
@@ -452,7 +436,7 @@ class WixService {
       
       // Try to re-authenticate on error
       if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-        this.logger.debug('Authentication expired, re-authenticating');
+        log('DEBUG', 'Authentication expired, re-authenticating');
         await this.authenticate();
       }
       
@@ -476,16 +460,15 @@ class WixService {
           timeout: 5000
         });
         apiReachable = healthResponse.status === 200;
-        this.logger.debug('Wix API health check passed');
+        log('DEBUG', 'Wix API health check passed');
       } catch (healthError) {
-        this.logger.warn('Wix API health check failed', { error: healthError.message });
+        log('WARN', 'Wix API health check failed', { error: healthError.message });
         // Continue anyway, as the health endpoint might not be available
       }
       
       // Check if we have the required settings
-      const settings = this.settings.getSettings();
-      const siteId = settings.wixSiteId;
-      const apiKey = settings.wixApiKey;
+      const siteId = this.settings.wixSiteId;
+      const apiKey = this.settings.wixApiKey;
       
       if (!siteId || !apiKey) {
         return {
@@ -504,7 +487,7 @@ class WixService {
       try {
         authResult = await this.authenticate();
       } catch (authError) {
-        this.logger.error('Authentication error', { error: authError.message });
+        log('ERROR', 'Authentication error', { error: authError.message });
         return {
           success: false,
           message: 'Authentication process failed',
@@ -557,7 +540,7 @@ class WixService {
             tokenExpiry: this.tokenExpiry
           };
         } catch (membersError) {
-          this.logger.warn('Members endpoint test failed', { error: membersError.message });
+          log('WARN', 'Members endpoint test failed', { error: membersError.message });
           
           // Fall back to site endpoint
           try {
@@ -581,7 +564,7 @@ class WixService {
               tokenExpiry: this.tokenExpiry
             };
           } catch (siteError) {
-            this.logger.error('Site endpoint test failed', { error: siteError.message });
+            log('ERROR', 'Site endpoint test failed', { error: siteError.message });
             
             // We're authenticated but couldn't get site info from either endpoint
             return {
@@ -599,7 +582,7 @@ class WixService {
           }
         }
       } catch (error) {
-        this.logger.error('Connection verification failed', { error: error.message });
+        log('ERROR', 'Connection verification failed', { error: error.message });
         
         return {
           success: false,
