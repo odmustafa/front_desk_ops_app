@@ -6,6 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const { app } = require('electron');
 const SeqLogger = require('../utils/SeqLogger');
+const LoggerService = require('../utils/LoggerService'); // Import LoggerService
 
 // Initialize Seq logger
 let seqLogger = null;
@@ -25,7 +26,7 @@ function initializeSeq() {
         const settingsData = fs.readFileSync(settingsPath, 'utf8');
         settings = JSON.parse(settingsData);
       } catch (err) {
-        console.error('Failed to parse settings file:', err.message);
+        LoggerService.error('Failed to parse settings file:', err.message);
       }
     }
     
@@ -37,7 +38,7 @@ function initializeSeq() {
         const seqSettings = JSON.parse(seqConfigData);
         settings = { ...settings, ...seqSettings };
       } catch (err) {
-        console.error('Failed to parse seq-logging.json file:', err.message);
+        LoggerService.error('Failed to parse seq-logging.json file:', err.message);
       }
     }
     
@@ -52,10 +53,10 @@ function initializeSeq() {
       });
       
       seqEnabled = true;
-      console.log('Seq logging bridge initialized:', settings.seqUrl);
+      LoggerService.info('Seq logging bridge initialized:', settings.seqUrl);
     }
   } catch (error) {
-    console.error('Failed to initialize Seq bridge:', error);
+    LoggerService.error('Failed to initialize Seq bridge:', error);
   }
 }
 
@@ -74,7 +75,7 @@ function logToSeq(level, message, data = {}) {
   try {
     seqLogger.log(level.toLowerCase(), message, data);
   } catch (error) {
-    console.error('Error sending log to Seq:', error);
+    LoggerService.error('Error sending log to Seq:', error);
   }
 }
 

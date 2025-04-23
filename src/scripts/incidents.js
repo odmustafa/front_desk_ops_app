@@ -2,6 +2,8 @@
 // Module for managing incident reports in the Front Desk Ops app
 
 // Use the API exposed by the preload script instead of direct require
+const LoggerService = require('../services/LoggerService');
+const logger = new LoggerService('IncidentsScript');
 const ipcRenderer = window.app?.ipcRenderer;
 
 // Get all incident reports
@@ -27,7 +29,7 @@ async function addIncidentReport(report) {
     if (ipcRenderer) {
         return await ipcRenderer.invoke('db:addIncidentReport', report);
     } else {
-        console.log('Incident report would be saved:', report);
+        logger.info('Incident report would be saved', { report });
         return { success: true, id: Date.now() };
     }
 }
@@ -89,7 +91,7 @@ function initializeIncidents() {
                     loadIncidentReports();
                 }
             } catch (error) {
-                console.error('Error submitting incident report:', error);
+                logger.error('Error submitting incident report', { error });
                 window.app.showAlert('Error', 'Failed to submit incident report. Please try again.');
             }
         });
@@ -144,7 +146,7 @@ async function loadIncidentReports() {
         });
         
     } catch (error) {
-        console.error('Error loading incident reports:', error);
+        logger.error('Error loading incident reports', { error });
         incidentList.innerHTML = '<div class="list-group-item text-danger">Error loading incidents.</div>';
     }
 }

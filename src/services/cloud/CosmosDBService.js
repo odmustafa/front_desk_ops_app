@@ -8,7 +8,8 @@ const Settings = require('../../core/Settings');
 
 class CosmosDBService {
   constructor() {
-    this.logger = new Logger('CosmosDBService');
+    const { createLogger } = require('../../core/Logger');
+    this.logger = createLogger(this.constructor.name);
     this.settings = new Settings();
     this.client = null;
     this.database = null;

@@ -12,7 +12,8 @@ const PlatformHelper = require('../utils/PlatformHelper');
 
 class Database {
   constructor() {
-    this.logger = new Logger('Database');
+    const { createLogger } = require('../core/Logger');
+    this.logger = createLogger(this.constructor.name);
     this.platform = new PlatformHelper();
     
     // Ensure data directory exists

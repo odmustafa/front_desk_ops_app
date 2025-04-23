@@ -3,6 +3,10 @@
  * Handles monitoring and displaying connection status for various services
  */
 
+// Connection status script for Tribute Music Gallery
+const LoggerService = require('../services/LoggerService');
+const logger = new LoggerService('ConnectionStatusScript');
+
 // Connection status constants
 const CONNECTION_STATUS = {
   UNKNOWN: 'unknown',
@@ -70,7 +74,7 @@ async function checkConnectionStatus() {
     // Update last checked time
     updateLastCheckedTime();
   } catch (error) {
-    console.error('Error checking connection status:', error);
+    logger.error('Error checking connection status', { error });
   }
 }
 
@@ -90,7 +94,7 @@ async function checkWixConnection() {
       updateConnectionStatus('wix', CONNECTION_STATUS.DISCONNECTED);
     }
   } catch (error) {
-    console.error('Error checking Wix connection:', error);
+    logger.error('Error checking Wix connection', { error });
     updateConnectionStatus('wix', CONNECTION_STATUS.DISCONNECTED);
   }
 }
@@ -111,7 +115,7 @@ async function checkTimeXpressConnection() {
       updateConnectionStatus('timeXpress', CONNECTION_STATUS.DISCONNECTED);
     }
   } catch (error) {
-    console.error('Error checking TimeXpress connection:', error);
+    logger.error('Error checking TimeXpress connection', { error });
     updateConnectionStatus('timeXpress', CONNECTION_STATUS.DISCONNECTED);
   }
 }
@@ -132,7 +136,7 @@ async function checkScanIDConnection() {
       updateConnectionStatus('scanID', CONNECTION_STATUS.DISCONNECTED);
     }
   } catch (error) {
-    console.error('Error checking Scan-ID connection:', error);
+    logger.error('Error checking Scan-ID connection', { error });
     updateConnectionStatus('scanID', CONNECTION_STATUS.DISCONNECTED);
   }
 }
@@ -153,7 +157,7 @@ async function checkDatabaseConnection() {
       updateConnectionStatus('database', CONNECTION_STATUS.DISCONNECTED);
     }
   } catch (error) {
-    console.error('Error checking database connection:', error);
+    logger.error('Error checking database connection', { error });
     updateConnectionStatus('database', CONNECTION_STATUS.DISCONNECTED);
   }
 }
@@ -174,7 +178,7 @@ async function checkSeqConnection() {
       updateConnectionStatus('seq', CONNECTION_STATUS.DISCONNECTED);
     }
   } catch (error) {
-    console.error('Error checking Seq connection:', error);
+    logger.error('Error checking Seq connection', { error });
     updateConnectionStatus('seq', CONNECTION_STATUS.DISCONNECTED);
   }
 }

@@ -2,24 +2,11 @@
 // Sets up SQLite database and provides utility functions for the Front Desk Ops app
 
 const path = require('path');
-const sqlite3 = require('sqlite3').verbose();
+const Database = require('better-sqlite3');
 const fs = require('fs');
+const LoggerService = require('../utils/logger');
 const electron = require('electron');
 const app = electron.app || electron.remote.app;
-
-// Import logger
-let logger;
-try {
-  logger = require('../utils/logger');
-} catch (error) {
-  // Fallback logger if module not available
-  logger = {
-    debug: console.debug,
-    info: console.info,
-    warn: console.warn,
-    error: console.error
-  };
-}
 
 // Ensure data directory exists
 const dataDir = path.join(__dirname, '../../data');
@@ -29,28 +16,27 @@ if (!fs.existsSync(dataDir)) {
 
 // Database file path (in user data directory or project root for dev)
 const dbPath = path.join(dataDir, 'frontdeskops.sqlite3');
-logger.info('Initializing database', { path: dbPath });
-const db = new sqlite3.Database(dbPath);
+LoggerService.info('Initializing database', { path: dbPath });
+const db = new Database(dbPath, { verbose: LoggerService.debug });
 
 // Initialize tables if they don't exist
 function initializeDatabase() {
-  logger.info('Initializing database tables');
+  LoggerService.info('Initializing database tables');
   
-  db.serialize(() => {
-    try {
+  try {
       // Knowledge Base table
-      logger.debug('Creating knowledge_base table if not exists');
-      db.run(`CREATE TABLE IF NOT EXISTS knowledge_base (
+      LoggerService.debug('Creating knowledge_base table if not exists');
+      db.prepare(`CREATE TABLE IF NOT EXISTS knowledge_base (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT NOT NULL,
         content TEXT NOT NULL,
         category TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )`);
+      )`).run();
       
       // Incidents table
-      logger.debug('Creating incidents table if not exists');
-      db.run(`CREATE TABLE IF NOT EXISTS incidents (
+      LoggerService.debug('Creating incidents table if not exists');
+      db.prepare(`CREATE TABLE IF NOT EXISTS incidents (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         reported_by TEXT,
         description TEXT NOT NULL,
@@ -61,22 +47,22 @@ function initializeDatabase() {
         action_taken TEXT,
         status TEXT DEFAULT 'open',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )`);
+      )`).run();
       
       // Announcements table
-      logger.debug('Creating announcements table if not exists');
-      db.run(`CREATE TABLE IF NOT EXISTS announcements (
+      LoggerService.debug('Creating announcements table if not exists');
+      db.prepare(`CREATE TABLE IF NOT EXISTS announcements (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT NOT NULL,
         content TEXT NOT NULL,
         priority TEXT DEFAULT 'normal',
         expiry_date TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )`);
+      )`).run();
       
       // Members table (for caching Wix member data)
-      logger.debug('Creating members table if not exists');
-      db.run(`CREATE TABLE IF NOT EXISTS members (
+      LoggerService.debug('Creating members table if not exists');
+      db.prepare(`CREATE TABLE IF NOT EXISTS members (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         wix_id TEXT UNIQUE,
         first_name TEXT,
@@ -86,22 +72,22 @@ function initializeDatabase() {
         membership_status TEXT,
         membership_expiry TEXT,
         last_sync TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )`);
+      )`).run();
       
       // Check-ins table
-      logger.debug('Creating check_ins table if not exists');
-      db.run(`CREATE TABLE IF NOT EXISTS check_ins (
+      LoggerService.debug('Creating check_ins table if not exists');
+      db.prepare(`CREATE TABLE IF NOT EXISTS check_ins (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         member_id TEXT,
         member_name TEXT,
         purpose TEXT,
         notes TEXT,
         timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )`);
+      )`).run();
       
       // Staff table
-      logger.debug('Creating staff table if not exists');
-      db.run(`CREATE TABLE IF NOT EXISTS staff (
+      LoggerService.debug('Creating staff table if not exists');
+      db.prepare(`CREATE TABLE IF NOT EXISTS staff (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         position TEXT,
@@ -109,94 +95,16 @@ function initializeDatabase() {
         phone TEXT,
         status TEXT DEFAULT 'active',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )`);
+      )`).run();
       
-      logger.info('Database tables initialized successfully');
-    } catch (error) {
-      logger.error('Error initializing database tables:', { error: error.message, stack: error.stack });
-      throw error;
-    }
-  });
+      LoggerService.info('Database tables initialized successfully');
+} catch (error) {
+  LoggerService.error('Error initializing database tables:', { error: error.message, stack: error.stack });
+  throw error;
+}
 }
 
-/**
- * Cache a member in the local database
- * @param {Object} member - Member data from Wix
- * @returns {Promise<Object>} - Result of the operation
- */
-function cacheMember(member) {
-  return new Promise((resolve, reject) => {
-    try {
-      // Extract member data, handling different property structures
-      const wixId = member._id || member.wix_id;
-      const firstName = member.contactInfo?.firstName || member.first_name || '';
-      const lastName = member.contactInfo?.lastName || member.last_name || '';
-      const email = member.loginEmail || member.email || '';
-      const phone = member.contactInfo?.phone || member.phone || '';
-      const status = member.membershipStatus || member.membership_status || 'UNKNOWN';
-      const expiry = member.expirationDate || member.membership_expiry || null;
-      
-      logger.debug('Caching member data', { 
-        wixId, 
-        name: `${firstName} ${lastName}`.trim(),
-        email: email.substring(0, 3) + '***' // Log partial email for privacy
-      });
-      
-      // Check if member already exists
-      db.get('SELECT id FROM members WHERE wix_id = ?', [wixId], (err, row) => {
-        if (err) {
-          logger.error('Error checking if member exists:', { wixId, error: err.message });
-          return reject(err);
-        }
-        
-        if (row) {
-          logger.debug('Updating existing member', { wixId, dbId: row.id });
-          // Update existing member
-          db.run(
-            `UPDATE members SET 
-              first_name = ?, 
-              last_name = ?, 
-              email = ?, 
-              phone = ?, 
-              membership_status = ?, 
-              membership_expiry = ?,
-              last_sync = CURRENT_TIMESTAMP 
-            WHERE wix_id = ?`,
-            [firstName, lastName, email, phone, status, expiry, wixId],
-            function(err) {
-              if (err) {
-                logger.error('Error updating member:', { wixId, error: err.message });
-                return reject(err);
-              }
-              logger.info('Member updated successfully', { wixId, dbId: row.id });
-              resolve({ id: row.id, updated: true });
-            }
-          );
-        } else {
-          logger.debug('Inserting new member', { wixId });
-          // Insert new member
-          db.run(
-            `INSERT INTO members 
-              (wix_id, first_name, last_name, email, phone, membership_status, membership_expiry) 
-            VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [wixId, firstName, lastName, email, phone, status, expiry],
-            function(err) {
-              if (err) {
-                logger.error('Error inserting member:', { wixId, error: err.message });
-                return reject(err);
-              }
-              logger.info('New member cached successfully', { wixId, dbId: this.lastID });
-              resolve({ id: this.lastID, updated: false });
-            }
-          );
-        }
-      });
-    } catch (error) {
-      logger.error('Error in cacheMember function:', { error: error.message, stack: error.stack });
-      reject(error);
-    }
-  });
-}
+
 
 /**
  * Search for members in the local database
@@ -204,40 +112,28 @@ function cacheMember(member) {
  * @returns {Promise<Array>} - Array of matching members
  */
 function searchMembers(searchTerm) {
-  return new Promise((resolve, reject) => {
-    try {
-      logger.debug('Searching members in local database', { searchTerm });
-      const searchPattern = `%${searchTerm}%`;
-      
-      db.all(
-        `SELECT * FROM members 
-         WHERE first_name LIKE ? OR last_name LIKE ? OR email LIKE ? OR phone LIKE ?`,
-        [searchPattern, searchPattern, searchPattern, searchPattern],
-        (err, rows) => {
-          if (err) {
-            logger.error('Error searching members in database:', { searchTerm, error: err.message });
-            return reject(err);
-          }
-          
-          const count = rows ? rows.length : 0;
-          logger.info('Local database search completed', { searchTerm, resultsCount: count });
-          
-          if (count > 0) {
-            logger.debug('Search results summary', {
-              searchTerm,
-              count,
-              firstResult: rows[0] ? `${rows[0].first_name} ${rows[0].last_name}`.trim() : 'N/A'
-            });
-          }
-          
-          resolve(rows || []);
-        }
-      );
-    } catch (error) {
-      logger.error('Error in searchMembers function:', { searchTerm, error: error.message, stack: error.stack });
-      reject(error);
+  try {
+    LoggerService.debug('Searching members in local database', { searchTerm });
+    const searchPattern = `%${searchTerm}%`;
+    const stmt = db.prepare(
+      `SELECT * FROM members 
+       WHERE first_name LIKE ? OR last_name LIKE ? OR email LIKE ? OR phone LIKE ?`
+    );
+    const rows = stmt.all(searchPattern, searchPattern, searchPattern, searchPattern);
+    const count = rows ? rows.length : 0;
+    LoggerService.info('Local database search completed', { searchTerm, resultsCount: count });
+    if (count > 0) {
+      LoggerService.debug('Search results summary', {
+        searchTerm,
+        count,
+        firstResult: rows[0] ? `${rows[0].first_name} ${rows[0].last_name}`.trim() : 'N/A'
+      });
     }
-  });
+    return rows || [];
+  } catch (error) {
+    LoggerService.error('Error in searchMembers function:', { searchTerm, error: error.message, stack: error.stack });
+    throw error;
+  }
 }
 
 /**
@@ -246,16 +142,13 @@ function searchMembers(searchTerm) {
  * @returns {Promise<Object>} - Member object or null if not found
  */
 function getMemberById(memberId) {
-  return new Promise((resolve, reject) => {
-    try {
-      db.get('SELECT * FROM members WHERE wix_id = ?', [memberId], (err, row) => {
-        if (err) return reject(err);
-        resolve(row || null);
-      });
-    } catch (error) {
-      reject(error);
-    }
-  });
+  try {
+    const stmt = db.prepare('SELECT * FROM members WHERE wix_id = ?');
+    const row = stmt.get(memberId);
+    return row || null;
+  } catch (error) {
+    throw error;
+  }
 }
 
 /**
@@ -264,41 +157,27 @@ function getMemberById(memberId) {
  * @returns {Promise<Object>} - Result of the operation
  */
 function addCheckIn(checkIn) {
-  return new Promise((resolve, reject) => {
+  try {
+    // Get member name if available
+    let memberName = 'Unknown Member';
     try {
-      // Get member name if available
-      getMemberById(checkIn.memberId)
-        .then(member => {
-          const memberName = member ? 
-            `${member.first_name} ${member.last_name}`.trim() : 
-            'Unknown Member';
-          
-          db.run(
-            `INSERT INTO check_ins (member_id, member_name, purpose, notes, timestamp) 
-             VALUES (?, ?, ?, ?, ?)`,
-            [checkIn.memberId, memberName, checkIn.purpose, checkIn.notes, checkIn.timestamp],
-            function(err) {
-              if (err) return reject(err);
-              resolve({ id: this.lastID });
-            }
-          );
-        })
-        .catch(error => {
-          // If we can't get the member, just use the ID
-          db.run(
-            `INSERT INTO check_ins (member_id, member_name, purpose, notes, timestamp) 
-             VALUES (?, ?, ?, ?, ?)`,
-            [checkIn.memberId, 'Unknown Member', checkIn.purpose, checkIn.notes, checkIn.timestamp],
-            function(err) {
-              if (err) return reject(err);
-              resolve({ id: this.lastID });
-            }
-          );
-        });
+      const member = getMemberById(checkIn.memberId);
+      if (member) {
+        memberName = `${member.first_name} ${member.last_name}`.trim();
+      }
     } catch (error) {
-      reject(error);
+      // If error, use Unknown Member
     }
-  });
+    const stmt = db.prepare(
+      `INSERT INTO check_ins (member_id, member_name, purpose, notes, timestamp) 
+       VALUES (?, ?, ?, ?, ?)`
+    );
+    const info = stmt.run(checkIn.memberId, memberName, checkIn.purpose, checkIn.notes, checkIn.timestamp);
+    LoggerService.info('Check-in added successfully', { id: info.lastInsertRowid });
+    return { id: info.lastInsertRowid };
+  } catch (error) {
+    throw error;
+  }
 }
 
 /**
@@ -307,20 +186,49 @@ function addCheckIn(checkIn) {
  * @returns {Promise<Array>} - Array of check-ins
  */
 function getRecentCheckIns(limit = 10) {
-  return new Promise((resolve, reject) => {
-    try {
-      db.all(
-        `SELECT * FROM check_ins ORDER BY timestamp DESC LIMIT ?`,
-        [limit],
-        (err, rows) => {
-          if (err) return reject(err);
-          resolve(rows || []);
-        }
-      );
-    } catch (error) {
-      reject(error);
+  try {
+    const stmt = db.prepare(`SELECT * FROM check_ins ORDER BY timestamp DESC LIMIT ?`);
+    const rows = stmt.all(limit);
+    return rows || [];
+  } catch (error) {
+    throw error;
+  }
+}
+/**
+ * Cache a member in the local database (better-sqlite3, synchronous)
+ * @param {Object} member - Member data from Wix
+ * @returns {Object} - Result of the operation
+ */
+function cacheMember(member) {
+  try {
+    // Validate and sanitize input
+    if (!member || typeof member !== 'object') {
+      logger.error('Invalid member object provided to cacheMember', { member });
+      return { success: false, error: 'Invalid member object' };
     }
-  });
+    // Defensive destructuring and fallback values
+    const wixId = member.id || member.wix_id || '';
+    const firstName = member.firstName || member.first_name || '';
+    const lastName = member.lastName || member.last_name || '';
+    const email = member.email || '';
+    const phone = member.phone || '';
+    const status = member.membershipStatus || member.membership_status || '';
+    const expiry = member.membershipExpiry || member.membership_expiry || '';
+
+    if (!wixId) {
+      logger.error('Missing wixId for member in cacheMember', { member });
+      return { success: false, error: 'Missing wixId for member' };
+    }
+
+    logger.debug('Caching member in local database', { wixId });
+    const stmt = db.prepare(`INSERT OR REPLACE INTO members (wix_id, first_name, last_name, email, phone, membership_status, membership_expiry, last_sync) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`);
+    stmt.run(wixId, firstName, lastName, email, phone, status, expiry);
+    logger.info('Member cached successfully', { wixId });
+    return { success: true };
+  } catch (error) {
+    logger.error('Error caching member:', { error: error.message, stack: error.stack, member });
+    return { success: false, error: error.message };
+  }
 }
 
 // Export database and functions

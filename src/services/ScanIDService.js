@@ -11,7 +11,8 @@ const PlatformHelper = require('../utils/PlatformHelper');
 
 class ScanIDService {
   constructor() {
-    this.logger = new Logger('ScanIDService');
+    const { createLogger } = require('../core/Logger');
+    this.logger = createLogger(this.constructor.name);
     this.settings = new Settings();
     this.platform = new PlatformHelper();
     this.exportPath = null;
@@ -266,19 +267,30 @@ class ScanIDService {
         allScans.push(...scans);
       }
       
-      this.logger.info(`Retrieved scans for ${dateString}`, { 
+      this.loggerService.info(`Retrieved scans for ${dateString}`, { 
         files: files.length, 
         scans: allScans.length 
       });
       
       return allScans;
     } catch (error) {
-      this.logger.error(`Error getting scans for date`, { 
+      this.loggerService.error(`Error getting scans for date`, { 
         error: error.message,
         date: date.toISOString()
       });
       return [];
     }
+  }
+
+  /**
+   * Process scan data
+   * @param {Object} scanData - Scan data
+   * @returns {Promise<Object>} Processed data
+   */
+  async processScanData(scanData) {
+    this.loggerService.debug('Processing scan data', { scanData });
+    // TODO: Implement actual scan processing logic
+    return { success: true, data: {} };
   }
 }
 

@@ -7,6 +7,7 @@ const fs = require('fs');
 const path = require('path');
 const electron = require('electron');
 const app = electron.app || electron.remote.app;
+const LoggerService = require('./logger-service'); // Import LoggerService
 
 // Try to load Seq bridge (will be available after app is ready)
 let seqBridge = null;
@@ -18,10 +19,10 @@ const loadSeqBridge = () => {
     if (!seqBridgeLoaded) {
       seqBridge = require('./seq-bridge');
       seqBridgeLoaded = true;
-      console.log('Seq bridge loaded successfully');
+      LoggerService.info('Seq bridge loaded successfully');
     }
   } catch (error) {
-    console.error('Failed to load Seq bridge:', error.message);
+    LoggerService.info('Failed to load Seq bridge:', error.message);
   }
 };
 
@@ -105,7 +106,7 @@ function writeToFile(message) {
     fs.appendFileSync(logFiles.projectLog, message + '\n');
     
   } catch (error) {
-    console.error('Failed to write to log files:', error);
+    LoggerService.info('Failed to write to log files:', error);
   }
 }
 
@@ -118,22 +119,22 @@ function writeToFile(message) {
 function log(level, message, data) {
   const formattedMessage = formatLogMessage(level, message, data);
   
-  // Log to console
+  // Log to LoggerService
   switch (level) {
     case LOG_LEVELS.DEBUG:
-      console.debug(formattedMessage);
+      LoggerService.debug(formattedMessage);
       break;
     case LOG_LEVELS.INFO:
-      console.info(formattedMessage);
+      LoggerService.info(formattedMessage);
       break;
     case LOG_LEVELS.WARN:
-      console.warn(formattedMessage);
+      LoggerService.warn(formattedMessage);
       break;
     case LOG_LEVELS.ERROR:
-      console.error(formattedMessage);
+      LoggerService.error(formattedMessage);
       break;
     default:
-      console.log(formattedMessage);
+      LoggerService.info(formattedMessage);
   }
   
   // Log to file
@@ -144,7 +145,7 @@ function log(level, message, data) {
     try {
       seqBridge.logToSeq(level, message, data);
     } catch (error) {
-      console.error('Error sending log to Seq:', error.message);
+      LoggerService.info('Error sending log to Seq:', error.message);
     }
   }
 }

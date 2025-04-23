@@ -5,6 +5,7 @@
 const axios = require('axios');
 const os = require('os');
 const { app } = require('electron');
+const LoggerService = require('./logger-service'); // Import LoggerService
 
 // Ensure API logger is initialized
 require('./api-logger');
@@ -91,7 +92,7 @@ class SeqLogger {
         }
       });
     } catch (e) {
-      console.error('Error cleaning properties for Seq:', e);
+      LoggerService.error('Error cleaning properties for Seq:', e);
     }
     
     // Format error if present
@@ -152,7 +153,7 @@ class SeqLogger {
     
     // Send to Seq
     this._sendToSeq(batch).catch(error => {
-      console.error('Error sending logs to Seq:', error.message);
+      LoggerService.error('Error sending logs to Seq:', error.message);
     });
   }
 
@@ -171,6 +172,8 @@ class SeqLogger {
         headers['X-Seq-ApiKey'] = this.apiKey;
       }
       
+      LoggerService.debug('Sending logs to Seq:', headers);
+      
       // Format events as CLEF format (Compact Log Event Format)
       // Each event must be a separate line
       const clefData = events.map(event => JSON.stringify(event)).join('\n');
@@ -183,7 +186,7 @@ class SeqLogger {
         timeout: 5000
       });
       
-      console.log(`Successfully sent ${events.length} logs to Seq`);
+      LoggerService.info(`Successfully sent ${events.length} logs to Seq`);
       
       // Update connection status on successful send
       if (!this.connectionStatus.connected) {
@@ -192,7 +195,7 @@ class SeqLogger {
         this.connectionStatus.lastError = null;
       }
     } catch (error) {
-      console.error('Failed to send logs to Seq:', error.message);
+      LoggerService.error('Failed to send logs to Seq:', error.message);
       
       // Update connection status on failure
       this.connectionStatus.connected = false;

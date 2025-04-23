@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline'">
+  <title>Front Desk Ops - Tribute Music Gallery</title>
+  <link rel="stylesheet" href="../styles/main.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+</head>
+<body>
+  <div class="container-fluid">
+    <!-- Sidebar Navigation -->
+    <div class="sidebar">
+      <div class="logo-container">
+        <img src="../assets/logo.svg" alt="Tribute Music Gallery Logo" class="logo logo-white">
+        <h4>Front Desk Ops</h4>
+      </div>
+      <nav class="nav flex-column">
+        <a class="nav-link active" href="#" data-page="dashboard">
+          <i class="bi bi-speedometer2"></i> Dashboard
+        </a>
+        <a class="nav-link" href="#" data-page="check-in">
+          <i class="bi bi-person-check"></i> Check-In
+        </a>
+        <a class="nav-link" href="#" data-page="staff">
+          <i class="bi bi-people"></i> Staff
+        </a>
+        <a class="nav-link" href="#" data-page="knowledge-base">
+          <i class="bi bi-book"></i> Knowledge Base
+        </a>
+        <a class="nav-link" href="#" data-page="incidents">
+          <i class="bi bi-exclamation-triangle"></i> Incidents
+        </a>
+        <a class="nav-link" href="#" data-page="announcements">
+          <i class="bi bi-megaphone"></i> Announcements
+        </a>
+        <a class="nav-link" href="#" data-page="settings">
+          <i class="bi bi-gear"></i> Settings
+        </a>
+        <a class="nav-link debug-nav-link" href="#" data-page="debug" style="display: none;">
+          <i class="bi bi-bug"></i> Debug
+        </a>
+      </nav>
+      <div class="staff-info">
+        <img src="../assets/placeholder-profile.svg" alt="Staff Photo" class="staff-photo">
+        <p class="staff-name">Staff Name</p>
+        <p class="staff-role">Front Desk</p>
+      </div>
+    </div>
+
+  <!-- Main Content Area -->
+  <div class="main-content">
+        <!-- Dashboard Page -->
+        <div id="dashboard" class="content-page active">
+          <h2>Dashboard</h2>
+          <div class="row">
+            <div class="col-md-4">
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">Today's Check-ins</h5>
+                  <p class="card-text count">0</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">Staff On Duty</h5>
+                  <p class="card-text count">0</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">Pending Tasks</h5>
+                  <p class="card-text count">0</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row mt-4">
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">Recent Check-ins</h5>
+                  <div class="table-responsive">
+                    <table class="table">
+                      <thead>
+                        <tr>
+                          <th>Name</th>
+                          <th>Time</th>
+                          <th>Membership</th>
+                        </tr>
+                      </thead>
+                      <tbody id="recent-checkins">
+                        <!-- Will be populated dynamically -->
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">Announcements</h5>
+                  <div id="announcements-list">
+                    <!-- Will be populated dynamically -->
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal for alerts and confirmations -->
+  <div class="modal fade" id="alert-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="alert-modal-title">Alert</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="alert-modal-body">
+          <!-- Alert content will be inserted here -->
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" id="alert-modal-confirm">Confirm</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Connection Status Bar -->
+  <div id="connection-status-bar" class="connection-status-bar">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-auto">
+          <span class="status-label">Connections:</span>
+        </div>
+        <div class="col-auto">
+          <div class="status-indicator">
+            <span class="status-dot status-unknown" id="wix-status-dot"></span>
+            <span class="status-text">Wix</span>
+          </div>
+        </div>
+        <div class="col-auto">
+          <div class="status-indicator">
+            <span class="status-dot status-unknown" id="timeXpress-status-dot"></span>
+            <span class="status-text">TimeXpress</span>
+          </div>
+        </div>
+        <div class="col-auto">
+          <div class="status-indicator">
+            <span class="status-dot status-unknown" id="scanID-status-dot"></span>
+            <span class="status-text">Scan-ID</span>
+          </div>
+        </div>
+        <div class="col-auto">
+          <div class="status-indicator">
+            <span class="status-dot status-unknown" id="database-status-dot"></span>
+            <span class="status-text">Database</span>
+          </div>
+        </div>
+        <div class="col-auto">
+          <div class="status-indicator">
+            <span class="status-dot status-unknown" id="seq-status-dot"></span>
+            <span class="status-text">Seq</span>
+          </div>
+        </div>
+        <div class="col text-end">
+          <span class="last-updated" id="connection-last-updated">Last updated: Never</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap and application scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../scripts/app.js"></script>
+  <script src="../scripts/check-in.js"></script>
+  <script src="../scripts/staff.js"></script>
+  <script src="../scripts/knowledge-base.js"></script>
+  <script src="../scripts/incidents.js"></script>
+  <script src="../scripts/announcements.js"></script>
+  <script src="../scripts/wix-settings.js"></script>
+  <script src="../scripts/member-check-in.js"></script>
+  <script src="../scripts/connection-status.js"></script>
+  <script src="../scripts/debug.js"></script>
+  <script src="../scripts/wix-test.js"></script>
+</body>
+</html>

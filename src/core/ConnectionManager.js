@@ -21,7 +21,7 @@ const CONNECTION_STATUS = {
 class ConnectionManager extends EventEmitter {
   constructor() {
     super();
-    this.logger = new Logger('ConnectionManager');
+    this.logger = new LoggerService('ConnectionManager');
     this.platform = new PlatformHelper();
     this.settings = new Settings();
     

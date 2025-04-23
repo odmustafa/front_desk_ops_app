@@ -27,6 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Application State
+const LoggerService = require('../services/LoggerService');
+const logger = new LoggerService('AppScript');
 const appState = {
   currentPage: 'dashboard',
   settings: {
@@ -65,7 +67,7 @@ function loadSettings() {
   if (savedSettings) {
     try {
       appState.settings = JSON.parse(savedSettings);
-      console.log('Settings loaded:', appState.settings);
+      logger.info('Settings loaded', { settings: appState.settings });
       
       // Apply settings to form fields
       if (document.getElementById('wix-api-key')) {
@@ -81,7 +83,7 @@ function loadSettings() {
         document.getElementById('time-clock-db').value = appState.settings.timeClockDb || '';
       }
     } catch (error) {
-      console.error('Error loading settings:', error);
+      logger.error('Error loading settings', { error });
       showAlert('Error', 'Failed to load application settings. Default settings will be used.');
     }
   }
@@ -97,7 +99,7 @@ function saveSettings() {
   appState.settings.timeClockDb = document.getElementById('time-clock-db').value;
   
   localStorage.setItem('frontDeskOpsSettings', JSON.stringify(appState.settings));
-  console.log('Settings saved:', appState.settings);
+  logger.info('Settings saved', { settings: appState.settings });
   
   showAlert('Success', 'Settings saved successfully!');
 }

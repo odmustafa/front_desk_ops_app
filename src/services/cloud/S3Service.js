@@ -11,7 +11,8 @@ const Settings = require('../../core/Settings');
 
 class S3Service {
   constructor() {
-    this.logger = new Logger('S3Service');
+    const { createLogger } = require('../../core/Logger');
+    this.logger = createLogger(this.constructor.name);
     this.settings = new Settings();
     this.client = null;
     this.initialized = false;

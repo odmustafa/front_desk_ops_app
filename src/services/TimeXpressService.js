@@ -9,9 +9,11 @@ const Logger = require('../core/Logger');
 const Settings = require('../core/Settings');
 const PlatformHelper = require('../utils/PlatformHelper');
 
+const LoggerService = require('./LoggerService');
+
 class TimeXpressService {
   constructor() {
-    this.logger = new Logger('TimeXpressService');
+    this.logger = new LoggerService('TimeXpressService');
     this.settings = new Settings();
     this.platform = new PlatformHelper();
     this.dbPath = null;

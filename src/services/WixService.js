@@ -6,6 +6,9 @@ const axios = require('axios');
 const Logger = require('../core/Logger');
 const Settings = require('../core/Settings');
 
+const { createLogger } = require('./Logger');
+const log = createLogger('WixService');
+
 class WixService {
   constructor() {
     this.baseUrl = 'https://www.wixapis.com';
@@ -44,7 +47,7 @@ class WixService {
       
       return defaultSettings;
     } catch (error) {
-      log('ERROR', 'Failed to load settings', { error: error.message });
+      log.error('Failed to load settings', { error: error.message });
       return {};
     }
   }
@@ -54,11 +57,11 @@ class WixService {
    */
   async initialize() {
     try {
-      log('INFO', 'Initializing Wix service');
+      log.info('Initializing Wix service');
       await this.authenticate();
       return true;
     } catch (error) {
-      log('ERROR', 'Failed to initialize Wix service', { error: error.message });
+      log.error('Failed to initialize Wix service', { error: error.message });
       return false;
     }
   }

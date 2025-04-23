@@ -100,7 +100,7 @@ async function handleIdScan() {
     denyVerificationBtn.disabled = false;
     
   } catch (error) {
-    console.error('Error scanning ID:', error);
+    logger.error('Error scanning ID', { error });
     window.app.showAlert('Error', 'Failed to scan ID. Please try again.');
     
     // Reset button state
@@ -181,7 +181,7 @@ async function searchWixAccounts(scanData) {
     displayMatchingAccounts(accounts);
     
   } catch (error) {
-    console.error('Error searching Wix accounts:', error);
+    logger.error('Error searching Wix accounts', { error });
     window.app.showAlert('Error', 'Failed to search for matching accounts. Please try again.');
   }
 }

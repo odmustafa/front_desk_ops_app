@@ -2,6 +2,8 @@
 // Module for managing the knowledge base section of the Front Desk Ops app
 
 // Use the API exposed by the preload script instead of direct require
+const LoggerService = require('../services/LoggerService');
+const logger = new LoggerService('KnowledgeBaseScript');
 const ipcRenderer = window.app?.ipcRenderer;
 
 // Get all knowledge base articles or filter by category
@@ -25,7 +27,7 @@ async function addKnowledgeBaseArticle(article) {
     if (ipcRenderer) {
         return await ipcRenderer.invoke('db:addKnowledgeBaseArticle', article);
     } else {
-        console.log('Article would be saved:', article);
+        logger.info('Article would be saved', { article });
         return { success: true, id: Date.now() };
     }
 }

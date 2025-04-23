@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline'">
+  <title>Knowledge Base - Tribute Music Gallery</title>
+  <link rel="stylesheet" href="../styles/main.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+</head>
+<body>
+  <div class="container-fluid">
+    <!-- Sidebar Navigation -->
+    <div class="sidebar">
+      <div class="logo-container">
+        <img src="../assets/logo.svg" alt="Tribute Music Gallery Logo" class="logo logo-white">
+        <h4>Front Desk Ops</h4>
+      </div>
+      <nav class="nav flex-column">
+        <a class="nav-link" href="#" data-page="dashboard">
+          <i class="bi bi-speedometer2"></i> Dashboard
+        </a>
+        <a class="nav-link" href="#" data-page="check-in">
+          <i class="bi bi-person-check"></i> Check-In
+        </a>
+        <a class="nav-link" href="#" data-page="staff">
+          <i class="bi bi-people"></i> Staff
+        </a>
+        <a class="nav-link active" href="#" data-page="knowledge-base">
+          <i class="bi bi-book"></i> Knowledge Base
+        </a>
+        <a class="nav-link" href="#" data-page="incidents">
+          <i class="bi bi-exclamation-triangle"></i> Incidents
+        </a>
+        <a class="nav-link" href="#" data-page="announcements">
+          <i class="bi bi-megaphone"></i> Announcements
+        </a>
+        <a class="nav-link" href="#" data-page="settings">
+          <i class="bi bi-gear"></i> Settings
+        </a>
+        <a class="nav-link debug-nav-link" href="#" data-page="debug" style="display: none;">
+          <i class="bi bi-bug"></i> Debug
+        </a>
+      </nav>
+      <div class="staff-info">
+        <img src="../assets/placeholder-profile.svg" alt="Staff Photo" class="staff-photo">
+        <p class="staff-name">Staff Name</p>
+        <p class="staff-role">Front Desk</p>
+      </div>
+    </div>
+    <!-- Main Content Area -->
+    <div class="main-content">
+      <div id="knowledge-base" class="content-page active">
+        <h2>Knowledge Base</h2>
+        <div class="row">
+          <div class="col-md-4">
+            <div class="card">
+              <div class="card-header">
+                <h5>Categories</h5>
+              </div>
+              <div class="card-body">
+                <div class="list-group" id="kb-categories">
+                  <a href="#" class="list-group-item list-group-item-action" data-category="employee-handbook">Employee Handbook</a>
+                  <a href="#" class="list-group-item list-group-item-action" data-category="emergency-procedures">Emergency Procedures</a>
+                  <a href="#" class="list-group-item list-group-item-action" data-category="contact-info">Contact Information</a>
+                  <a href="#" class="list-group-item list-group-item-action" data-category="faqs">FAQs</a>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-8">
+            <div class="card">
+              <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                  <h5 id="kb-title">Select a Category</h5>
+                  <div class="input-group" style="width: 300px;">
+                    <input type="text" class="form-control" placeholder="Search Knowledge Base" id="kb-search">
+                    <button class="btn btn-outline-secondary" type="button" id="kb-search-btn">
+                      <i class="bi bi-search"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="card-body">
+                <div id="kb-content">
+                  <!-- Will be populated dynamically -->
+                  <p class="text-center text-muted">Select a category from the left to view content</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Bootstrap and application scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../scripts/app.js"></script>
+  <script src="../scripts/knowledge-base.js"></script>
+</body>
+</html>

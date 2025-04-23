@@ -2,6 +2,8 @@
 // Module for managing announcements in the Front Desk Ops app
 
 // Use the API exposed by the preload script instead of direct require
+const LoggerService = require('../services/LoggerService');
+const logger = new LoggerService('AnnouncementsScript');
 const ipcRenderer = window.app?.ipcRenderer;
 
 // Get all announcements
@@ -27,7 +29,7 @@ async function addAnnouncement(announcement) {
     if (ipcRenderer) {
         return await ipcRenderer.invoke('db:addAnnouncement', announcement);
     } else {
-        console.log('Announcement would be saved:', announcement);
+        logger.info('Announcement would be saved', { announcement });
         return { success: true, id: Date.now() };
     }
 }
@@ -63,7 +65,7 @@ function initializeAnnouncements() {
                     loadAnnouncements();
                 }
             } catch (error) {
-                console.error('Error posting announcement:', error);
+                logger.error('Error posting announcement', { error });
                 window.app.showAlert('Error', 'Failed to post announcement. Please try again.');
             }
         });
@@ -131,7 +133,7 @@ async function loadAnnouncements() {
         }
         
     } catch (error) {
-        console.error('Error loading announcements:', error);
+        logger.error('Error loading announcements', { error });
         if (allAnnouncements) {
             allAnnouncements.innerHTML = '<div class="announcement text-danger">Error loading announcements.</div>';
         }

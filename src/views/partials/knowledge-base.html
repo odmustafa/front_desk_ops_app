@@ -1,0 +1,42 @@
+<!-- Knowledge Base Partial -->
+<div id="knowledge-base" class="content-page active">
+  <h2>Knowledge Base</h2>
+  <div class="row">
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header">
+          <h5>Categories</h5>
+        </div>
+        <div class="card-body">
+          <div class="list-group" id="kb-categories">
+            <a href="#" class="list-group-item list-group-item-action" data-category="employee-handbook">Employee Handbook</a>
+            <a href="#" class="list-group-item list-group-item-action" data-category="emergency-procedures">Emergency Procedures</a>
+            <a href="#" class="list-group-item list-group-item-action" data-category="contact-info">Contact Information</a>
+            <a href="#" class="list-group-item list-group-item-action" data-category="faqs">FAQs</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 id="kb-title">Select a Category</h5>
+            <div class="input-group" style="width: 300px;">
+              <input type="text" class="form-control" placeholder="Search Knowledge Base" id="kb-search">
+              <button class="btn btn-outline-secondary" type="button" id="kb-search-btn">
+                <i class="bi bi-search"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div id="kb-content">
+            <!-- Will be populated dynamically -->
+            <p class="text-center text-muted">Select a category from the left to view content</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

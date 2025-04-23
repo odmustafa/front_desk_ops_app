@@ -9,7 +9,8 @@ const Logger = require('./Logger');
 
 class Settings {
   constructor() {
-    this.logger = new Logger('Settings');
+    const { createLogger } = require('./Logger');
+    this.logger = createLogger(this.constructor.name);
     this.settingsPath = path.join(app.getPath('userData'), 'app-settings.json');
     this.configPath = path.join(__dirname, '..', 'config', 'settings.json');
     

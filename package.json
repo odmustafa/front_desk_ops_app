@@ -20,10 +20,17 @@
     "@wix/api-client": "^1.14.1",
     "@wix/sdk": "^1.15.17",
     "axios": "^1.8.4",
+    "better-sqlite3": "^11.9.1",
     "csv-parse": "^5.5.0",
+    "csv-parser": "^3.2.0",
     "dotenv": "^16.5.0",
     "mssql": "^10.0.1",
-    "sqlite3": "^5.1.6"
+    "pino": "^9.6.0",
+    "pino-caller": "^4.0.0",
+    "pino-seq": "^1.2.0",
+    "sqlite3": "^5.1.6",
+    "winston": "^3.17.0",
+    "winston-seq": "^0.1.0"
   },
   "build": {
     "appId": "com.tributegallery.frontdeskops",
@@ -39,6 +46,7 @@
     }
   },
   "devDependencies": {
-    "electron": "^35.2.0"
+    "electron": "^35.2.0",
+    "pino-pretty": "^13.0.0"
   }
 }

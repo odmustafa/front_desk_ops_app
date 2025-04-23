@@ -3,6 +3,12 @@
  * Handles staff scheduling, tasks, and directory
  */
 
+// Import LoggerService
+const LoggerService = require('../services/LoggerService');
+
+// Instantiate LoggerService with context 'StaffScript'
+const logger = new LoggerService('StaffScript');
+
 // DOM Elements
 const staffSchedule = document.getElementById('staff-schedule');
 const taskList = document.getElementById('task-list');
@@ -64,7 +70,7 @@ async function loadTasks() {
     displayTasks(tasks);
     
   } catch (error) {
-    console.error('Error loading tasks:', error);
+    logger.error('Error loading tasks', { error });
     window.app.showAlert('Error', 'Failed to load tasks. Please try again.');
   }
 }
@@ -199,7 +205,7 @@ function toggleTaskCompletion(taskId) {
     displayTasks(staffState.tasks);
     
     // In a real implementation, this would update the database
-    console.log(`Task ${taskId} completion toggled to ${staffState.tasks[taskIndex].completed}`);
+    logger.info('Task completion toggled', { taskId, completed: staffState.tasks[taskIndex].completed });
   }
 }
 
@@ -273,7 +279,7 @@ function handleAddTask() {
       displayTasks(staffState.tasks);
       
       // In a real implementation, this would save to the database
-      console.log('New task added:', newTask);
+      logger.info('New task added', { newTask });
     }
   );
   
@@ -308,7 +314,7 @@ async function loadSchedule() {
     displaySchedule(schedule);
     
   } catch (error) {
-    console.error('Error loading schedule:', error);
+    logger.error('Error loading schedule', { error });
     window.app.showAlert('Error', 'Failed to load schedule. Please try again.');
   }
 }
@@ -662,7 +668,7 @@ async function loadStaffDirectory() {
     displayStaffDirectory(staff);
     
   } catch (error) {
-    console.error('Error loading staff directory:', error);
+    logger.error('Error loading staff directory', { error });
     window.app.showAlert('Error', 'Failed to load staff directory. Please try again.');
   }
 }
@@ -934,7 +940,7 @@ function editStaffMember(staffId) {
           displayStaffDirectory(staffState.staff);
           
           // In a real implementation, this would update the database
-          console.log('Staff member updated:', staffState.staff[staffIndex]);
+          logger.info('Staff member updated', { staff: staffState.staff[staffIndex] });
         }
       }
     );

@@ -8,18 +8,8 @@ const wixIntegration = window.require ? window.require('../database/wix-integrat
 const { ipcRenderer } = window.require ? window.require('electron') : {};
 
 // Get logger
-let logger;
-try {
-    logger = window.require ? window.require('../utils/logger.js') : console;
-} catch (error) {
-    // Fallback to console if logger is not available
-    logger = {
-        debug: console.debug,
-        info: console.info,
-        warn: console.warn,
-        error: console.error
-    };
-}
+const LoggerService = require('../services/LoggerService');
+const logger = new LoggerService('MemberCheckInScript');
 
 // DOM Elements
 let memberSearchInput;
@@ -100,14 +90,14 @@ function debounce(func, wait) {
  */
 async function searchMembers(quickSearch = false) {
     if (!ipcRenderer && !wixIntegration) {
-        showError('Wix integration not available');
+        logger.error('Wix integration not available');
         return;
     }
     
     const searchTerm = memberSearchInput.value.trim();
     if (!searchTerm) {
         if (!quickSearch) {
-            showError('Please enter a search term');
+            logger.error('Please enter a search term');
         }
         return;
     }
@@ -184,9 +174,9 @@ async function searchMembers(quickSearch = false) {
             source: localOnly ? 'local database' : 'Wix and local database'
         });
         
-        // Output detailed results to console for debugging
+        // Output detailed results to LoggerService for debugging
         if (members.length > 0) {
-            console.group(`Member Search Results for "${searchTerm}"`);
+            logger.group(`Member Search Results for "${searchTerm}"`);
             members.forEach((member, index) => {
                 const firstName = member.contactInfo?.firstName || member.first_name || '';
                 const lastName = member.contactInfo?.lastName || member.last_name || '';
@@ -194,9 +184,9 @@ async function searchMembers(quickSearch = false) {
                 const email = member.loginEmail || member.email || 'No email';
                 const memberId = member._id || member.wix_id;
                 
-                console.log(`${index + 1}. ${name} (${memberId}) - ${email}`);
+                logger.log(`${index + 1}. ${name} (${memberId}) - ${email}`);
             });
-            console.groupEnd();
+            logger.groupEnd();
         }
         
         // Display results
@@ -269,7 +259,7 @@ async function searchMembers(quickSearch = false) {
         });
         
     } catch (error) {
-        console.error('Error searching members:', error);
+        logger.error('Error searching members:', error);
         memberSearchResults.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
     }
 }
@@ -294,7 +284,7 @@ async function cacheMember(member) {
         
         await ipcRenderer.invoke('db:cacheMember', cachedMember);
     } catch (error) {
-        console.error('Error caching member data:', error);
+        logger.error('Error caching member data:', error);
     }
 }
 
@@ -334,7 +324,7 @@ async function selectMember(memberId) {
             el.classList.add('active');
         });
     } catch (error) {
-        console.error('Error selecting member:', error);
+        LoggerService.error('Error selecting member:', error);
         showError('Failed to select member: ' + error.message);
     }
 }
@@ -420,7 +410,7 @@ async function checkInMember(event) {
         if (ipcRenderer) {
             await ipcRenderer.invoke('db:addCheckIn', checkIn);
         } else {
-            console.log('Check-in would be saved:', checkIn);
+            LoggerService.info('Check-in would be saved:', checkIn);
         }
         
         // Show success message
@@ -435,7 +425,7 @@ async function checkInMember(event) {
         loadCheckInHistory();
         
     } catch (error) {
-        console.error('Error checking in member:', error);
+        logger.error('Error checking in member', { error });
         showError('Failed to check in member: ' + error.message);
     }
 }
@@ -490,7 +480,7 @@ async function loadCheckInHistory() {
         checkInHistoryList.innerHTML = html;
         
     } catch (error) {
-        console.error('Error loading check-in history:', error);
+        LoggerService.error('Error loading check-in history:', error);
         checkInHistoryList.innerHTML = '<div class="alert alert-danger">Error loading check-in history</div>';
     }
 }

@@ -4,6 +4,8 @@
  */
 
 // Initialize debug mode based on settings
+const LoggerService = require('../services/LoggerService');
+const logger = new LoggerService('DebugScript');
 let debugModeEnabled = false;
 
 // DOM elements
@@ -64,7 +66,7 @@ function loadDeveloperModeState() {
       toggleDebugNavVisibility(enabled);
     })
     .catch(error => {
-      console.error('Failed to load developer mode state:', error);
+      logger.error('Failed to load developer mode state', { error });
     });
 }
 
@@ -85,7 +87,7 @@ function toggleDeveloperMode() {
       }
     })
     .catch(error => {
-      console.error('Failed to save developer mode setting:', error);
+      logger.error('Failed to save developer mode setting', { error });
     });
 }
 
@@ -116,7 +118,7 @@ function refreshLogs() {
       displayLogs(logs);
     })
     .catch(error => {
-      console.error('Failed to get logs:', error);
+      logger.error('Failed to get logs', { error });
       debugLogContent.innerHTML = `<span class="log-error">Error loading logs: ${error.message}</span>`;
     });
 }
@@ -155,7 +157,7 @@ function clearLogs() {
       debugLogContent.innerHTML = '<span class="log-info">Logs cleared</span>';
     })
     .catch(error => {
-      console.error('Failed to clear logs:', error);
+      logger.error('Failed to clear logs', { error });
     });
 }
 
@@ -174,7 +176,7 @@ function loadSystemInfo() {
       updateConnectionStatusDetails();
     })
     .catch(error => {
-      console.error('Failed to get system info:', error);
+      logger.error('Failed to get system info', { error });
     });
 }
 
