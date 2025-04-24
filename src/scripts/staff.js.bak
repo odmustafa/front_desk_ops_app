@@ -64,7 +64,7 @@ async function loadTasks() {
     displayTasks(tasks);
     
   } catch (error) {
-    console.error('Error loading tasks:', error);
+    (window.app && window.app.log ? window.app.log.error : (...args) => { if (window && window.console) window.console.error('[StaffModule]', ...args); })('Error loading tasks:', error);
     window.app.showAlert('Error', 'Failed to load tasks. Please try again.');
   }
 }
@@ -199,7 +199,7 @@ function toggleTaskCompletion(taskId) {
     displayTasks(staffState.tasks);
     
     // In a real implementation, this would update the database
-    console.log(`Task ${taskId} completion toggled to ${staffState.tasks[taskIndex].completed}`);
+    (window.app && window.app.log ? window.app.log.info : (...args) => { if (window && window.console) window.console.log('[StaffModule]', ...args); })(`Task ${taskId} completion toggled to ${staffState.tasks[taskIndex].completed}`);
   }
 }
 
@@ -273,7 +273,7 @@ function handleAddTask() {
       displayTasks(staffState.tasks);
       
       // In a real implementation, this would save to the database
-      console.log('New task added:', newTask);
+      (window.app && window.app.log ? window.app.log.info : (...args) => { if (window && window.console) window.console.log('[StaffModule]', ...args); })('New task added:', newTask);
     }
   );
   
@@ -308,7 +308,7 @@ async function loadSchedule() {
     displaySchedule(schedule);
     
   } catch (error) {
-    console.error('Error loading schedule:', error);
+    (window.app && window.app.log ? window.app.log.error : (...args) => { if (window && window.console) window.console.error('[StaffModule]', ...args); })('Error loading schedule:', error);
     window.app.showAlert('Error', 'Failed to load schedule. Please try again.');
   }
 }
@@ -664,7 +664,7 @@ function editStaffMember(staffId) {
           displayStaffDirectory(staffState.staff);
           
           // In a real implementation, this would update the database
-          console.log('Staff member updated:', staffState.staff[staffIndex]);
+          (window.app && window.app.log ? window.app.log.info : (...args) => { if (window && window.console) window.console.log('[StaffModule]', ...args); })('Staff member updated:', staffState.staff[staffIndex]);
         }
       }
     );

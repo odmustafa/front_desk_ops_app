@@ -3,9 +3,11 @@
  * Provides structured logging for API requests and responses
  */
 
-const logger = require('./logger');
+
 const axios = require('axios');
 
+const LoggerService = require('../services/LoggerService');
+const logger = new LoggerService('ApiLogger');
 // Create an axios interceptor to log all requests and responses
 const setupAxiosLogging = () => {
   // Request interceptor

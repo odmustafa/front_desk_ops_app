@@ -7,13 +7,12 @@ const path = require('path');
 const fs = require('fs');
 const sqlite = require('better-sqlite3');
 const { app } = require('electron');
-const Logger = require('../core/Logger');
+const LoggerService = require('../services/LoggerService');
 const PlatformHelper = require('../utils/PlatformHelper');
 
 class Database {
   constructor() {
-    const { createLogger } = require('../core/Logger');
-    this.logger = createLogger(this.constructor.name);
+    this.logger = new LoggerService('Database');
     this.platform = new PlatformHelper();
     
     // Ensure data directory exists

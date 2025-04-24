@@ -1,6 +1,6 @@
 /**
- * Logger Utility for Front Desk Ops App
- * Handles console logging, file logging with daily rotation, and Seq logging
+ * DEPRECATED: Use LoggerService from services/LoggerService.js for all logging. This file is retained only for legacy reference.
+ * Any usage of this module should be migrated to LoggerService immediately.
  */
 
 const fs = require('fs');
@@ -173,13 +173,4 @@ function getSeqConnectionStatus() {
 }
 
 // Exported logging functions
-module.exports = {
-  debug: (message, data) => log(LOG_LEVELS.DEBUG, message, data),
-  info: (message, data) => log(LOG_LEVELS.INFO, message, data),
-  warn: (message, data) => log(LOG_LEVELS.WARN, message, data),
-  error: (message, data) => log(LOG_LEVELS.ERROR, message, data),
-  LOG_LEVELS,
-  getCurrentLogFiles,
-  checkSeqConnection,
-  getSeqConnectionStatus
-};
+throw new Error('logger.js is deprecated. Use LoggerService from services/LoggerService.js for all logging.');

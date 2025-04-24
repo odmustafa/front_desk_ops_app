@@ -1,5 +1,6 @@
 /**
  * Logger.js
+ * DEPRECATED: Use LoggerService from src/services/LoggerService.js for all logging. This file is retained only for legacy reference.
  * Centralized structured logging using Pino for the Tribute Front Desk Ops application.
  *
  * Usage:

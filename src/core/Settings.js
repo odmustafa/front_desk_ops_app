@@ -5,12 +5,11 @@
 const fs = require('fs');
 const path = require('path');
 const { app } = require('electron');
-const Logger = require('./Logger');
+const LoggerService = require('../services/LoggerService');
 
 class Settings {
   constructor() {
-    const { createLogger } = require('./Logger');
-    this.logger = createLogger(this.constructor.name);
+    this.logger = new LoggerService('Settings');
     this.settingsPath = path.join(app.getPath('userData'), 'app-settings.json');
     this.configPath = path.join(__dirname, '..', 'config', 'settings.json');
     

@@ -9,8 +9,8 @@ const Logger = require('../core/Logger');
 
 class PlatformHelper {
   constructor() {
-    const { createLogger } = require('../core/Logger');
-    this.logger = createLogger(this.constructor.name);
+    const LoggerService = require('../services/LoggerService');
+    this.logger = new LoggerService('PlatformHelper');
     this.isWindows = process.platform === 'win32';
     this.isMacOS = process.platform === 'darwin';
     this.isLinux = process.platform === 'linux';

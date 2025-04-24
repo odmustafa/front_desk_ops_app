@@ -5,14 +5,13 @@
 const fs = require('fs');
 const path = require('path');
 const csv = require('csv-parser');
-const Logger = require('../core/Logger');
+const LoggerService = require('../services/LoggerService');
 const Settings = require('../core/Settings');
 const PlatformHelper = require('../utils/PlatformHelper');
 
 class ScanIDService {
   constructor() {
-    const { createLogger } = require('../core/Logger');
-    this.logger = createLogger(this.constructor.name);
+    this.logger = new LoggerService('ScanIDService');
     this.settings = new Settings();
     this.platform = new PlatformHelper();
     this.exportPath = null;
