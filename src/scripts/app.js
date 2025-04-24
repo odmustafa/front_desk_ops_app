@@ -49,6 +49,50 @@ document.addEventListener('DOMContentLoaded', () => {
   // Load application settings
   loadSettings();
   
+  // Initialize connection status bar
+  if (typeof initializeConnectionStatus === 'function') {
+    initializeConnectionStatus();
+  } else {
+    logger.warn('Connection status initialization function not found');
+  }
+  
+  // Direct event listener for Check-In tab
+  const checkInLink = document.getElementById('checkin-nav-link');
+  if (checkInLink) {
+    console.log('Found Check-In link, adding direct event listener');
+    checkInLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      console.log('Check-In tab clicked directly');
+      
+      // Hide all content pages
+      document.querySelectorAll('.content-page').forEach(page => {
+        page.classList.remove('active');
+      });
+      
+      // Show Check-In page
+      const checkInPage = document.getElementById('checkin');
+      if (checkInPage) {
+        console.log('Found Check-In page, activating');
+        checkInPage.classList.add('active');
+        
+        // Initialize check-in if available
+        if (typeof window.initCheckIn === 'function') {
+          window.initCheckIn();
+        }
+      } else {
+        console.error('Check-In page not found');
+      }
+      
+      // Update nav links
+      document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.remove('active');
+      });
+      checkInLink.classList.add('active');
+    });
+  } else {
+    console.error('Check-In link not found');
+  }
+  
   // Set up navigation
   setupNavigation();
   
@@ -101,18 +145,26 @@ function saveSettings() {
   localStorage.setItem('frontDeskOpsSettings', JSON.stringify(appState.settings));
   logger.info('Settings saved', { settings: appState.settings });
   
+  console.log('Settings saved successfully!');
   showAlert('Success', 'Settings saved successfully!');
 }
 
 /**
- * Set up navigation between pages
+ * Set up navigation event listeners
  */
 function setupNavigation() {
+  console.log('Setting up navigation, found links:', navLinks.length);
+  
+  // Add click event listeners to navigation links
   navLinks.forEach(link => {
+    const pageName = link.getAttribute('data-page');
+    console.log(`Setting up listener for ${pageName}`);
+    
     link.addEventListener('click', (e) => {
       e.preventDefault();
-      const targetPage = link.getAttribute('data-page');
-      navigateToPage(targetPage);
+      const pageName = link.getAttribute('data-page');
+      console.log(`Navigation link clicked: ${pageName}`);
+      navigateToPage(pageName);
     });
   });
 }
@@ -122,34 +174,58 @@ function setupNavigation() {
  * @param {string} pageName - The name of the page to navigate to
  */
 function navigateToPage(pageName) {
+  console.log(`Navigating to page: ${pageName}`);
+  
+  // Update current page in app state
+  appState.currentPage = pageName;
+  
   // Update active nav link
+  console.log(`Updating nav links for ${pageName}, total links: ${navLinks.length}`);
   navLinks.forEach(link => {
-    if (link.getAttribute('data-page') === pageName) {
+    const linkPage = link.getAttribute('data-page');
+    console.log(`Checking nav link: ${linkPage}`);
+    if (linkPage === pageName) {
+      console.log(`Setting ${linkPage} as active`);
       link.classList.add('active');
     } else {
       link.classList.remove('active');
     }
   });
   
+  // Use the ID that matches the page name
+  const pageId = pageName;
+  console.log(`Looking for content page with ID: ${pageId}`);
+  
   // Show selected page, hide others
+  console.log(`Total content pages found: ${contentPages.length}`);
+  let pageFound = false;
   contentPages.forEach(page => {
-    if (page.id === pageName) {
+    console.log(`Checking page: ${page.id}`);
+    if (page.id === pageId) {
+      console.log(`Activating page: ${pageId}`);
       page.classList.add('active');
+      pageFound = true;
+      logger.info(`Activating page: ${pageId}`);
     } else {
       page.classList.remove('active');
     }
   });
   
-  // Update current page in app state
-  appState.currentPage = pageName;
+  if (!pageFound) {
+    console.error(`Page not found: ${pageId}`);
+  }
   
   // Perform any page-specific initialization
   switch (pageName) {
     case 'dashboard':
       refreshDashboard();
       break;
-    case 'check-in':
+    case 'cin':
       resetCheckInForm();
+      break;
+    case 'fuck':
+      // The fuck.js script handles initialization
+      console.log('FUCK tab selected');
       break;
     case 'staff':
       loadStaffData();
@@ -180,23 +256,58 @@ function initializeDashboard() {
 /**
  * Refresh dashboard data
  */
-async function refreshDashboard() {
+function refreshDashboard() {
   // Example: Recent check-ins (TODO: wire to DB)
   const recentCheckinsContainer = document.getElementById('recent-checkins');
   if (recentCheckinsContainer) {
     recentCheckinsContainer.innerHTML = `<tr><td>John Doe</td><td>10:15 AM</td><td>Monthly</td></tr>`; // Placeholder
   }
+  
   // Announcements
   const announcementsList = document.getElementById('announcements-list');
   if (announcementsList) {
-    const announcements = await getAnnouncements();
-    announcementsList.innerHTML = '';
-    announcements.forEach(a => {
-      const div = document.createElement('div');
-      div.className = `announcement ${a.priority || ''}`;
-      div.innerHTML = `<div class="announcement-title">${a.title}</div><div class="announcement-content">${a.content}</div><div class="announcement-date">Posted: ${new Date(a.created_at).toLocaleDateString()}</div>`;
-      announcementsList.appendChild(div);
-    });
+    announcementsList.innerHTML = `
+      <div class="announcement">
+        <h6>System Update</h6>
+        <p>Front Desk Ops will be updated tonight at 11 PM. Please save your work.</p>
+        <small>Posted: Today, 9:15 AM</small>
+      </div>
+    `;
+  }
+}
+
+/**
+ * Reset Check-In form and initialize it
+ */
+function resetCheckInForm() {
+  logger.info('Initializing Check-In tab');
+  
+  // Reset form fields
+  const idFields = ['id-first-name', 'id-last-name', 'id-dob'];
+  const accountFields = ['account-first-name', 'account-last-name', 'account-birthday', 'account-email', 'account-phone', 'membership-status'];
+  
+  // Reset ID scan fields
+  idFields.forEach(fieldId => {
+    const field = document.getElementById(fieldId);
+    if (field) field.value = '';
+  });
+  
+  // Reset account fields
+  accountFields.forEach(fieldId => {
+    const field = document.getElementById(fieldId);
+    if (field) field.value = '';
+  });
+  
+  // Reset images
+  const idPhoto = document.getElementById('id-photo');
+  const profilePhoto = document.getElementById('profile-photo');
+  
+  if (idPhoto) idPhoto.src = 'assets/placeholder-profile.svg';
+  if (profilePhoto) profilePhoto.src = 'assets/placeholder-profile.svg';
+  
+  // Initialize check-in event listeners if not already done
+  if (typeof window.initCheckIn === 'function') {
+    window.initCheckIn();
   }
 }
 

@@ -51,6 +51,9 @@ function initializeConnectionStatus() {
   setInterval(checkConnectionStatus, 30000);
 }
 
+// Make the initialization function globally accessible
+window.initializeConnectionStatus = initializeConnectionStatus;
+
 /**
  * Check status of all connections
  */

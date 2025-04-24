@@ -39,9 +39,25 @@ const checkInState = {
 
 // Initialize the check-in module
 document.addEventListener('DOMContentLoaded', () => {
-  // Set up event listeners
-  setupCheckInEventListeners();
+  // Set up event listeners if we're on the check-in page initially
+  if (document.getElementById('check-in')) {
+    setupCheckInEventListeners();
+  }
 });
+
+// Add a custom event listener for view changes
+document.addEventListener('viewLoaded', (event) => {
+  // Check if the check-in view was loaded
+  if (event.detail && event.detail.view === 'check-in') {
+    // Set up event listeners
+    setupCheckInEventListeners();
+  }
+});
+
+// Export the initialization function for direct calling from views.js
+window.initCheckIn = function() {
+  setupCheckInEventListeners();
+};
 
 /**
  * Set up event listeners for the check-in page
@@ -409,21 +425,54 @@ function completeOnboarding() {
  * Handle member check-in
  */
 function handleCheckIn() {
-  // Check if verification has been passed
-  if (!checkInState.verificationPassed) {
-    window.app.showAlert('Error', 'Please complete ID verification before checking in.');
+  // Check if ID has been scanned, account has been matched, and verification has been passed
+  if (!checkInState.idScanned || !checkInState.accountMatched || !checkInState.verificationPassed) {
+    window.app.showAlert('Error', 'Please complete the ID verification process before checking in.');
     return;
   }
   
-  // In a real implementation, this would record the check-in in the database
+  // In a real implementation, this would call the Wix API to record the check-in
+  // For now, we'll simulate the API call
   
-  window.app.showAlert('Check-In Complete', 'Member has been successfully checked in.');
+  // Show loading state
+  checkInBtn.disabled = true;
+  checkInBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
   
-  // Reset the check-in form
-  resetCheckInForm();
+  // Simulate API call
+  setTimeout(() => {
+    // Reset button state
+    checkInBtn.disabled = false;
+    checkInBtn.textContent = 'Check In';
+    
+    // Show success message
+    window.app.showAlert('Success', `${checkInState.selectedAccount.firstName} ${checkInState.selectedAccount.lastName} has been checked in successfully.`);
+    
+    // Reset the form
+    resetCheckInForm();
+  }, 1500);
+}
+
+/**
+ * Format a date string to a more readable format
+ * @param {string} dateString - The date string to format (YYYY-MM-DD)
+ * @returns {string} - The formatted date string (MM/DD/YYYY)
+ */
+function formatDate(dateString) {
+  if (!dateString || dateString === 'N/A') return 'N/A';
   
-  // Navigate back to the dashboard
-  window.app.navigateToPage('dashboard');
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString; // Invalid date
+    
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const year = date.getFullYear();
+    
+    return `${month.toString().padStart(2, '0')}/${day.toString().padStart(2, '0')}/${year}`;
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return dateString;
+  }
 }
 
 /**

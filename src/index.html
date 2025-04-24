@@ -19,8 +19,11 @@
         <a class="nav-link active" href="#" data-page="dashboard">
           <i class="bi bi-speedometer2"></i> Dashboard
         </a>
-        <a class="nav-link" href="#" data-page="check-in">
+        <a class="nav-link" href="#" data-page="cin">
           <i class="bi bi-person-check"></i> Check-In
+        </a>
+        <a class="nav-link" href="#" data-page="fuck" style="color: #ff5555; font-weight: bold;">
+          <i class="bi bi-person-badge"></i> FUCK
         </a>
         <a class="nav-link" href="#" data-page="staff">
           <i class="bi bi-people"></i> Staff
@@ -50,6 +53,48 @@
 
   <!-- Main Content Area -->
   <div class="main-content">
+    <!-- Debug Button for Check-In Tab -->
+    <div style="position: fixed; top: 10px; right: 10px; z-index: 9999;">
+      <button id="show-checkin-btn" class="btn btn-primary" onclick="showCheckInTab()" style="font-size: 12px;">Show Check-In Tab</button>
+    </div>
+    
+    <script>
+      function showCheckInTab() {
+        console.log('Manual Check-In button clicked');
+        
+        // Hide all content pages
+        const contentPages = document.querySelectorAll('.content-page');
+        contentPages.forEach(page => {
+          console.log(`Found page: ${page.id}`);
+          page.classList.remove('active');
+        });
+        
+        // Show Check-In page
+        const checkInPage = document.getElementById('cin');
+        if (checkInPage) {
+          console.log(`Showing Check-In page with ID: ${checkInPage.id}`);
+          checkInPage.classList.add('active');
+          
+          // Initialize check-in if available
+          if (typeof window.initCheckIn === 'function') {
+            console.log('Calling initCheckIn function');
+            window.initCheckIn();
+          }
+        } else {
+          console.error('No Check-In page found with either ID');
+          alert('Check-In page not found!');
+        }
+        
+        // Update nav links
+        const navLinks = document.querySelectorAll('.nav-link');
+        navLinks.forEach(link => {
+          link.classList.remove('active');
+          if (link.getAttribute('data-page') === 'cin') {
+            link.classList.add('active');
+          }
+        });
+      }
+    </script>
         <!-- Dashboard Page -->
         <div id="dashboard" class="content-page active">
           <h2>Dashboard</h2>
@@ -114,8 +159,91 @@
           </div>
         </div>
 
+        <!-- Staff Page -->
+        <div id="staff" class="content-page">
+          <h2>Staff Management</h2>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-header">
+                  <h5>Staff Schedule</h5>
+                </div>
+                <div class="card-body">
+                  <div id="staff-schedule">
+                    <!-- Will be populated dynamically -->
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-header">
+                  <h5>Task List</h5>
+                </div>
+                <div class="card-body">
+                  <div id="task-list">
+                    <!-- Will be populated dynamically -->
+                  </div>
+                  <div class="mt-3">
+                    <button class="btn btn-primary" id="add-task-btn">Add Task</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row mt-4">
+            <div class="col-md-12">
+              <div class="card">
+                <div class="card-header">
+                  <h5>Staff Directory</h5>
+                </div>
+                <div class="card-body">
+                  <div class="table-responsive">
+                    <table class="table">
+                      <thead>
+                        <tr>
+                          <th>Name</th>
+                          <th>Position</th>
+                          <th>Contact</th>
+                          <th>Status</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody id="staff-directory">
+                        <!-- Will be populated dynamically -->
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Knowledge Base Page -->
+        <div id="knowledge-base" class="content-page">
+          <h2>Knowledge Base</h2>
+          <div class="row">
+            <div class="col-md-4">
+              <div class="card">
+                <div class="card-header">
+                  <h5>Categories</h5>
+                </div>
+                <div class="card-body">
+                  <div class="list-group" id="kb-categories">
+                    <a href="#" class="list-group-item list-group-item-action" data-category="employee-handbook">Employee Handbook</a>
+                    <a href="#" class="list-group-item list-group-item-action" data-category="emergency-procedures">Emergency Procedures</a>
+                    <a href="#" class="list-group-item list-group-item-action" data-category="contact-info">Contact Information</a>
+                    <a href="#" class="list-group-item list-group-item-action" data-category="faqs">FAQs</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Check-In Page -->
-        <div id="check-in" class="content-page">
+        <div id="cin" class="content-page">
           <h2>Member Check-In</h2>
           
           <!-- Member Search Section -->
@@ -674,6 +802,114 @@
             </div>
           </div>
         </div>
+
+        <!-- Check-In Page -->
+        <div id="cin" class="content-page">
+          <h2>Check-In</h2>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="card">
+                <div class="main-header" style="display:flex; align-items:center; gap:1em;">
+                  <img src="assets/logo.svg" alt="Tribute Music Gallery Logo" class="logo logo-white" />
+                  <h1 style="margin:0;">Tribute Music Gallery</h1>
+              <h1 style="margin:0;">Tribute Music Gallery</h1>
+            </div>
+            <div class="card-body">
+              <div class="text-center mb-3">
+                <img src="assets/placeholder-profile.svg" alt="ID Photo" class="id-photo" id="id-photo">
+              </div>
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label for="id-first-name">First Name</label>
+                    <input type="text" class="form-control" id="id-first-name" disabled>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label for="id-last-name">Last Name</label>
+                    <input type="text" class="form-control" id="id-last-name" disabled>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label for="id-dob">Date of Birth</label>
+                    <input type="text" class="form-control" id="id-dob" disabled>
+                  </div>
+                </div>
+              </div>
+              <div class="text-center mt-3">
+                <button class="btn btn-primary" id="scan-id-btn">Scan ID</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header">
+              <h5>Account Information</h5>
+            </div>
+            <div class="card-body">
+              <div class="text-center mb-3">
+                <img src="assets/placeholder-profile.svg" alt="Profile Photo" class="profile-photo" id="profile-photo">
+              </div>
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="account-first-name">First Name</label>
+                    <input type="text" class="form-control" id="account-first-name" disabled>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="account-last-name">Last Name</label>
+                    <input type="text" class="form-control" id="account-last-name" disabled>
+                  </div>
+                </div>
+              </div>
+              <div class="row mt-2">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="account-birthday">Birthday</label>
+                    <input type="text" class="form-control" id="account-birthday" disabled>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="account-email">Email</label>
+                    <input type="email" class="form-control" id="account-email" disabled>
+                  </div>
+                </div>
+              </div>
+              <div class="row mt-2">
+                <div class="col-md-12">
+                  <div class="form-group">
+                    <label for="current-membership">Current Membership</label>
+                    <div class="membership-info" id="current-membership">
+                      <div class="status">Status: <span id="membership-status">Inactive</span></div>
+                      <div class="plan">Plan: <span id="membership-plan">None</span></div>
+                      <div class="expiration">Expiration: <span id="membership-expiration">N/A</span></div>
+                      <div class="dues">Dues: <span id="membership-dues">N/A</span></div>
+                      <div class="interest">Interest: <span id="membership-interest"></span></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="matching-accounts collapse" id="matching-accounts">
+                <h6>Matching Accounts</h6>
+                <div class="list-group" id="matching-accounts-list">
+                  <!-- Will be populated dynamically -->
+                </div>
+              </div>
+              <div class="text-center mt-3">
+                <button class="btn btn-success" id="pass-verification-btn" disabled>Pass ID Verification</button>
+                <button class="btn btn-danger" id="deny-verification-btn" disabled>Deny ID Verification</button>
+                <button class="btn btn-primary" id="begin-onboarding-btn">Begin Onboarding</button>
+                <button class="btn btn-secondary" id="check-in-btn" disabled>Check In</button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -741,5 +977,13 @@
     </div>
   </div>
 
+  <!-- Application Scripts -->
+  <script src="scripts/app.js"></script>
+  <script src="scripts/views.js"></script>
+  <script src="scripts/check-in.js"></script>
+  <script src="scripts/staff.js"></script>
+  <script src="scripts/connection-status.js"></script>
+  <script src="scripts/checkin-fix.js"></script>
+  <script src="scripts/fuck.js"></script>
 </body>
 </html>

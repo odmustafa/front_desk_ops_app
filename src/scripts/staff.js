@@ -9,14 +9,9 @@ const LoggerService = require('../services/LoggerService');
 // Instantiate LoggerService with context 'StaffScript'
 const logger = new LoggerService('StaffScript');
 
-// DOM Elements
-const staffSchedule = document.getElementById('staff-schedule');
-const taskList = document.getElementById('task-list');
-const addTaskBtn = document.getElementById('add-task-btn');
-const staffDirectory = document.getElementById('staff-directory');
-
 // Staff management state
 const staffState = {
+  currentPage: 'directory',
   tasks: [],
   schedule: [],
   staff: []
@@ -26,31 +21,116 @@ const staffState = {
 document.addEventListener('DOMContentLoaded', () => {
   // Set up event listeners
   setupStaffEventListeners();
+  
+  // Expose loadStaffPage to the window object for use in HTML
+  window.loadStaffPage = loadStaffPage;
 });
 
 /**
  * Set up event listeners for the staff page
  */
 function setupStaffEventListeners() {
-  // Add task button
-  if (addTaskBtn) {
-    addTaskBtn.addEventListener('click', handleAddTask);
+  // Sub-navigation links
+  document.querySelectorAll('.staff-subnav a').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const page = link.getAttribute('data-staff-page');
+      loadStaffPage(page);
+    });
+  });
+  
+  // Add task button event listener will be set after the page loads
+}
+
+/**
+ * Load a specific staff sub-page
+ * @param {string} page - The page to load (directory, tasks, schedule)
+ */
+async function loadStaffPage(page) {
+  try {
+    // Update state
+    staffState.currentPage = page;
+    
+    // Update active navigation
+    updateStaffNavigation(page);
+    
+    // Get the content area
+    const contentArea = document.getElementById('staff-content-area');
+    if (!contentArea) {
+      logger.error('Staff content area not found');
+      return;
+    }
+    
+    // Show loading indicator
+    contentArea.innerHTML = '<div class="text-center p-5"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+    
+    // Load the appropriate page content
+    const response = await fetch(`../views/partials/staff-${page}.html`);
+    if (!response.ok) {
+      throw new Error(`Failed to load staff ${page} page`);
+    }
+    
+    // Update content
+    contentArea.innerHTML = await response.text();
+    
+    // Initialize the page-specific functionality
+    initializeStaffPage(page);
+    
+  } catch (error) {
+    logger.error(`Error loading staff ${page} page`, { error });
+    document.getElementById('staff-content-area').innerHTML = 
+      `<div class="alert alert-danger">Error loading ${page} page: ${error.message}</div>`;
   }
 }
 
 /**
- * Load staff data from database
+ * Update the staff navigation to highlight the active page
+ * @param {string} activePage - The active page
  */
-function loadStaffData() {
-  // Load tasks
-  loadTasks();
-  
-  // Load schedule
-  loadSchedule();
-  
-  // Load staff directory
-  loadStaffDirectory();
+function updateStaffNavigation(activePage) {
+  document.querySelectorAll('.staff-subnav a').forEach(link => {
+    const page = link.getAttribute('data-staff-page');
+    if (page === activePage) {
+      link.classList.add('active');
+    } else {
+      link.classList.remove('active');
+    }
+  });
 }
+
+/**
+ * Initialize page-specific functionality
+ * @param {string} page - The page to initialize
+ */
+function initializeStaffPage(page) {
+  switch (page) {
+    case 'directory':
+      loadStaffDirectory();
+      break;
+    case 'tasks':
+      loadTasks();
+      // Set up event listeners for the tasks page
+      const addTaskBtn = document.getElementById('add-task-btn');
+      if (addTaskBtn) {
+        addTaskBtn.addEventListener('click', handleAddTask);
+      }
+      break;
+    case 'schedule':
+      loadSchedule();
+      // Set up event listeners for the schedule page
+      const printScheduleBtn = document.getElementById('print-schedule-btn');
+      if (printScheduleBtn) {
+        printScheduleBtn.addEventListener('click', printSchedule);
+      }
+      const editScheduleBtn = document.getElementById('edit-schedule-btn');
+      if (editScheduleBtn) {
+        editScheduleBtn.addEventListener('click', editSchedule);
+      }
+      break;
+  }
+}
+
+
 
 /**
  * Load tasks from database
@@ -71,7 +151,10 @@ async function loadTasks() {
     
   } catch (error) {
     logger.error('Error loading tasks', { error });
-    window.app.showAlert('Error', 'Failed to load tasks. Please try again.');
+    const taskList = document.getElementById('task-list');
+    if (taskList) {
+      taskList.innerHTML = `<div class="alert alert-danger">Error loading tasks: ${error.message}</div>`;
+    }
   }
 }
 
@@ -125,6 +208,7 @@ function simulateTasksData() {
  */
 function displayTasks(tasks) {
   // Check if task list element exists
+  const taskList = document.getElementById('task-list');
   if (!taskList) return;
   
   // Clear the list

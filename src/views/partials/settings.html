@@ -1,5 +1,95 @@
-<!-- Settings Partial -->
-<div id="settings" class="content-page">
-  <h2>Settings</h2>
-  <!-- Insert settings content here -->
+<h2>Settings</h2>
+<div class="row">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">
+        <h5>Application Settings</h5>
+      </div>
+      <div class="card-body">
+        <form id="app-settings-form">
+          <div class="card mb-3">
+            <div class="card-header bg-primary text-white">
+              <h6 class="mb-0">Wix Integration</h6>
+            </div>
+            <div class="card-body">
+              <div class="form-group">
+                <label for="wix-site-id">Wix Site ID</label>
+                <input type="text" class="form-control" id="wix-site-id" placeholder="Enter your Wix site ID">
+              </div>
+              <div class="form-group mt-2">
+                <label for="wix-api-key">Wix API Key</label>
+                <input type="password" class="form-control" id="wix-api-key" placeholder="Enter your Wix API key">
+              </div>
+              <div class="form-group mt-2">
+                <label for="wix-api-secret">Wix API Secret</label>
+                <input type="password" class="form-control" id="wix-api-secret" placeholder="Enter your Wix API secret">
+              </div>
+              <div class="mt-2">
+                <button type="button" class="btn btn-outline-primary btn-sm" id="test-wix-connection">Test Connection</button>
+                <span id="wix-connection-status" class="ms-2"></span>
+              </div>
+            </div>
+          </div>
+          <div class="form-group mt-2">
+            <label for="owncast-url">Owncast Server URL</label>
+            <input type="text" class="form-control" id="owncast-url">
+          </div>
+          <div class="form-group mt-2">
+            <label for="scan-id-path">Scan-ID Export Path</label>
+            <input type="text" class="form-control" id="scan-id-path">
+          </div>
+          <div class="form-group mt-2">
+            <label for="time-clock-db">TimeXpress Database Path</label>
+            <input type="text" class="form-control" id="time-clock-db">
+          </div>
+          <div class="form-check mt-3">
+            <input type="checkbox" class="form-check-input" id="developer-mode">
+            <label class="form-check-label" for="developer-mode">Developer Mode</label>
+          </div>
+          <div class="text-center mt-3">
+            <button type="submit" class="btn btn-primary">Save Settings</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">
+        <h5>Database Management</h5>
+      </div>
+      <div class="card-body">
+        <div class="d-grid gap-2">
+          <button class="btn btn-primary" id="backup-db-btn">Backup Database</button>
+          <button class="btn btn-warning" id="restore-db-btn">Restore Database</button>
+          <button class="btn btn-danger" id="reset-db-btn">Reset Database</button>
+        </div>
+        <div class="mt-4">
+          <h6>Database Status</h6>
+          <div class="table-responsive">
+            <table class="table table-sm">
+              <tbody>
+                <tr>
+                  <td>Members</td>
+                  <td id="db-members-count">0</td>
+                </tr>
+                <tr>
+                  <td>Staff</td>
+                  <td id="db-staff-count">0</td>
+                </tr>
+                <tr>
+                  <td>Incidents</td>
+                  <td id="db-incidents-count">0</td>
+                </tr>
+                <tr>
+                  <td>Last Backup</td>
+                  <td id="db-last-backup">Never</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>

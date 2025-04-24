@@ -1,9 +1,9 @@
 /* Main Styles for Front Desk Ops Application */
 
 :root {
-  --primary-color: #FF3B3B;      /* Tribute Red */
+  --primary-color: #949878;      /* Tribute Red */
   --secondary-color: #181818;    /* Gallery Black */
-  --accent-color: #FFE066;       /* Gold Accent */
+  --accent-color: #CCCCCC;       /* Gold Accent */
   --text-color: #FFFFFF;         /* White */
   --muted-text-color: #BDBDBD;   /* Muted Gray */
   --border-color: #333333;       /* Border Gray */
@@ -120,6 +120,7 @@ body {
 .main-content {
   margin-left: var(--sidebar-width);
   padding: 20px;
+  padding-bottom: 40px;
   background: var(--secondary-color);
   color: var(--text-color);
   min-height: 100vh;
@@ -307,6 +308,143 @@ h2 {
   filter: invert(1) brightness(2) grayscale(1);
 }
 
+/* Custom Button Styles */
+.btn-primary {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+  color: var(--text-color) !important;
+}
+
+.btn-primary:hover, .btn-primary:focus, .btn-primary:active {
+  background-color: #7d8164 !important; /* Darker shade of primary color */
+  border-color: #7d8164 !important;
+  color: var(--text-color) !important;
+}
+
+/* Exception for Backup Database button */
+#backup-db-btn.btn-primary {
+  background-color: #0d6efd !important; /* Bootstrap default blue */
+  border-color: #0d6efd !important;
+}
+
+#backup-db-btn.btn-primary:hover, 
+#backup-db-btn.btn-primary:focus, 
+#backup-db-btn.btn-primary:active {
+  background-color: #0b5ed7 !important; /* Darker blue */
+  border-color: #0a58ca !important;
+}
+
+.btn-outline-primary {
+  color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+  background-color: transparent !important;
+}
+
+.btn-outline-primary:hover, .btn-outline-primary:focus, .btn-outline-primary:active {
+  background-color: var(--primary-color) !important;
+  color: var(--text-color) !important;
+}
+
+/* Secondary button styles */
+.btn-secondary {
+  background-color: #3a3a3a !important;
+  border-color: #3a3a3a !important;
+  color: var(--text-color) !important;
+}
+
+.btn-secondary:hover, .btn-secondary:focus, .btn-secondary:active {
+  background-color: #4a4a4a !important;
+  border-color: #4a4a4a !important;
+  color: var(--text-color) !important;
+}
+
+.btn-outline-secondary {
+  color: var(--muted-text-color) !important;
+  border-color: #3a3a3a !important;
+  background-color: transparent !important;
+}
+
+.btn-outline-secondary:hover, .btn-outline-secondary:focus, .btn-outline-secondary:active {
+  background-color: #3a3a3a !important;
+  color: var(--text-color) !important;
+  border-color: #4a4a4a !important;
+}
+
+/* Override Bootstrap's default focus styles */
+.btn:focus, .btn.focus {
+  box-shadow: 0 0 0 0.2rem rgba(148, 152, 120, 0.25) !important; /* Primary color with transparency */
+}
+
+/* Staff Sub-Navigation Styles */
+.staff-subnav {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.staff-subnav a {
+  padding: 8px 15px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  color: var(--text-color);
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+}
+
+.staff-subnav a:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: var(--primary-color);
+}
+
+.staff-subnav a.active {
+  background-color: var(--primary-color);
+  color: #fff;
+  border-color: var(--primary-color);
+}
+
+/* Staff Schedule Styles */
+.schedule-table th, .schedule-table td {
+  text-align: center;
+  vertical-align: middle;
+  padding: 10px;
+}
+
+.schedule-controls {
+  display: flex;
+  align-items: center;
+}
+
+.schedule-cell {
+  font-size: 0.85rem;
+  padding: 5px !important;
+  height: 50px;
+}
+
+.staff-1 { background-color: rgba(25, 135, 84, 0.2); }
+.staff-2 { background-color: rgba(13, 110, 253, 0.2); }
+.staff-3 { background-color: rgba(220, 53, 69, 0.2); }
+.staff-4 { background-color: rgba(255, 193, 7, 0.2); }
+.staff-5 { background-color: rgba(111, 66, 193, 0.2); }
+
+/* Task List Styles */
+.task-item {
+  padding: 15px;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 10px;
+}
+
+.task-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-top: 8px;
+  font-size: 0.8rem;
+  color: var(--muted-text-color);
+}
+
 /* For inline SVGs with fill, you could also use:
 .logo-white svg {
   fill: #fff;
@@ -370,6 +508,7 @@ h2 {
   z-index: 1000;
   font-size: 12px;
   height: 30px;
+  display: block !important; /* Ensure visibility */
 }
 
 .status-indicator {
