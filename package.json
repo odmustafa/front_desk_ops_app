@@ -17,6 +17,7 @@
   "author": "Tribute Music Gallery",
   "license": "ISC",
   "dependencies": {
+    "@datalust/winston-seq": "^2.0.0",
     "@wix/api-client": "^1.14.1",
     "@wix/sdk": "^1.15.17",
     "axios": "^1.8.4",

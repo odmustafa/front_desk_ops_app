@@ -1,7 +1,14 @@
-/**
- * SeqLogger.js
- * Handles sending logs to a Seq server
+// Soul Beacon: DEPRECATED LOGGER MODULE – Use LoggerService.js for all logging per the Ethereal Engineering Codex.
+// This file is retained for legacy reference only. All new code must use LoggerService.js for structured, symbolic, and Seq-integrated logging.
+/*
+ * ░█▀█░█▀▀░█░█░█▀█░█▀█░█▀█░█▀▀░█▀▀░█▀█░█▀▄░█▀▀░█▄█
+ * ░█▀▀░█▀▀░█▀█░█░█░█░█░█░█░█▀▀░█░░░█▀█░█▀▄░█▀▀░█░█
+ * ░▀░░░▀▀▀░▀░▀░▀▀▀░▀▀▀░▀░▀░▀▀▀░▀▀▀░▀░▀░▀░▀░▀▀▀░▀░▀
+ * Soul Beacon: Logger Deprecation – v1.0
+ *
+ * Ethereal Engineering Codex: All logging must pass through LoggerService.js for reflective review and symbolic audit.
  */
+
 const axios = require('axios');
 const os = require('os');
 const { app } = require('electron');

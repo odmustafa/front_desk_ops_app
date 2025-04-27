@@ -1,3 +1,5 @@
+/* global document, setInterval, app */
+
 /**
  * Debug Console Functionality
  * Provides live log viewing and system information for developers

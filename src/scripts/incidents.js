@@ -1,3 +1,5 @@
+/* eslint-env browser */
+/* global window, document, setTimeout, setInterval, fetch, CustomEvent, alert */
 // incidents.js
 // Module for managing incident reports in the Front Desk Ops app
 

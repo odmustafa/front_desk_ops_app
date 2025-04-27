@@ -1,3 +1,5 @@
+/* eslint-env browser */
+/* global window, document, setTimeout, setInterval, fetch, CustomEvent, alert */
 // knowledge-base.js
 // Module for managing the knowledge base section of the Front Desk Ops app
 

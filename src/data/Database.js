@@ -3,8 +3,6 @@
  * Manages SQLite database connection and operations
  * Uses better-sqlite3 for improved Windows compatibility
  */
-const path = require('path');
-const fs = require('fs');
 const sqlite = require('better-sqlite3');
 const { app } = require('electron');
 const LoggerService = require('../services/LoggerService');
@@ -16,11 +14,11 @@ class Database {
     this.platform = new PlatformHelper();
     
     // Ensure data directory exists
-    this.dataDir = path.join(app.getPath('userData'), 'data');
+    this.dataDir = app.getPath('userData') + '/data';
     this.platform.ensureDirectoryExists(this.dataDir);
     
     // Database file path
-    this.dbPath = path.join(this.dataDir, 'frontdeskops.sqlite3');
+    this.dbPath = this.dataDir + '/frontdeskops.sqlite3';
     this.logger.info('Initializing database', { path: this.dbPath });
     
     // Database connection
@@ -279,11 +277,11 @@ class Database {
     try {
       if (!backupPath) {
         const timestamp = new Date().toISOString().replace(/:/g, '-');
-        backupPath = path.join(this.dataDir, `backup-${timestamp}.sqlite3`);
+        backupPath = this.dataDir + `/backup-${timestamp}.sqlite3`;
       }
       
       // Ensure backup directory exists
-      const backupDir = path.dirname(backupPath);
+      const backupDir = backupPath.substring(0, backupPath.lastIndexOf('/'));
       this.platform.ensureDirectoryExists(backupDir);
       
       // Create backup

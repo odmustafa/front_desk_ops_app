@@ -10,7 +10,6 @@ const { registerWixHandlers } = require('../ipc/WixHandlers');
 const MemberModel = require('../models/MemberModel');
 const EventModel = require('../models/EventModel');
 const logger = new LoggerService('AppController');
-logger.warn('MainWindowView = require../views/MainWindowView');
 const MainWindowView = require('../views/MainWindowView');
 const MemberService = require('../services/MemberService');
 const EventService = require('../services/EventService');

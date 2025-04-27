@@ -1,12 +1,9 @@
-// SettingsController.js
+const LoggerService = require('../services/LoggerService');
+const logger = new LoggerService('SettingsController');
 // Handles application settings IPC handlers
 
-const { app } = require('electron');
-const path = require('path');
-const fs = require('fs');
-
 class SettingsController {
-  constructor(ipcMain, appSettings, saveSettings, logger) {
+  constructor(ipcMain, appSettings, saveSettings) {
     this.ipcMain = ipcMain;
     this.appSettings = appSettings;
     this.saveSettings = saveSettings;

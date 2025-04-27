@@ -22,7 +22,7 @@ class KnowledgeBaseController {
         });
       });
     });
-    // Handler: db:addKnowledgeBaseArticle
+
     this.ipcMain.handle('db:addKnowledgeBaseArticle', async (event, article) => {
       this.logger.debug('Adding knowledge base article', { title: article.title });
       return new Promise((resolve, reject) => {
@@ -37,7 +37,7 @@ class KnowledgeBaseController {
           });
       });
     });
-    // Handler: db:getIncidentReports
+
     this.ipcMain.handle('db:getIncidentReports', async () => {
       this.logger.debug('Getting incident reports');
       return new Promise((resolve, reject) => {
@@ -50,7 +50,7 @@ class KnowledgeBaseController {
         });
       });
     });
-    // Handler: db:addIncidentReport
+
     this.ipcMain.handle('db:addIncidentReport', async (event, report) => {
       this.logger.debug('Adding incident report', { reporter: report.reported_by });
       return new Promise((resolve, reject) => {
@@ -65,7 +65,7 @@ class KnowledgeBaseController {
           });
       });
     });
-    // Handler: db:getAnnouncements
+
     this.ipcMain.handle('db:getAnnouncements', async () => {
       this.logger.debug('Getting announcements');
       return new Promise((resolve, reject) => {
@@ -78,7 +78,7 @@ class KnowledgeBaseController {
         });
       });
     });
-    // Handler: db:addAnnouncement
+
     this.ipcMain.handle('db:addAnnouncement', async (event, announcement) => {
       this.logger.debug('Adding announcement', { title: announcement.title });
       return new Promise((resolve, reject) => {
@@ -93,7 +93,7 @@ class KnowledgeBaseController {
           });
       });
     });
-    // Handler: db:addCheckIn
+
     this.ipcMain.handle('db:addCheckIn', async (event, checkIn) => {
       this.logger.debug('Adding member check-in', { memberName: checkIn.memberName });
       return new Promise((resolve, reject) => {
@@ -108,12 +108,11 @@ class KnowledgeBaseController {
           });
       });
     });
-    // Handler: db:checkConnection
+
     this.ipcMain.handle('db:checkConnection', async () => {
       this.logger.debug('Checking database connection');
       return await this.db.checkConnection();
     });
-    // Add more DB/knowledge base handlers as needed
   }
 }
 module.exports = KnowledgeBaseController;

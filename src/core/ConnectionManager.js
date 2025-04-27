@@ -2,13 +2,14 @@
  * ConnectionManager.js
  * Manages connections to external services (Wix, TimeXpress, Scan-ID, Database, Seq)
  */
+/* global setInterval, clearInterval */
 const fs = require('fs');
-const path = require('path');
+require('path');
 const Logger = require('./Logger');
 const PlatformHelper = require('../utils/PlatformHelper');
 const Settings = require('./Settings');
 const EventEmitter = require('events');
-const SeqLogger = require('../utils/SeqLogger');
+require('../utils/SeqLogger');
 
 // Connection status constants
 const CONNECTION_STATUS = {
@@ -20,24 +21,24 @@ const CONNECTION_STATUS = {
 
 class ConnectionManager extends EventEmitter {
   constructor() {
-    super();
-    this.logger = new LoggerService('ConnectionManager');
-    this.platform = new PlatformHelper();
-    this.settings = new Settings();
-    
-    this.state = {
-      wix: CONNECTION_STATUS.UNKNOWN,
-      timeXpress: CONNECTION_STATUS.UNKNOWN,
-      scanID: CONNECTION_STATUS.UNKNOWN,
-      database: CONNECTION_STATUS.UNKNOWN,
-      seq: CONNECTION_STATUS.UNKNOWN,
-      lastUpdated: null
-    };
-    
-    // Check status every 30 seconds
-    this.checkInterval = 30000;
-    this.intervalId = null;
-  }
+  super();
+  this.logger = new Logger('ConnectionManager');
+  this.platform = new PlatformHelper();
+  this.settings = new Settings();
+  
+  this.state = {
+    wix: CONNECTION_STATUS.UNKNOWN,
+    timeXpress: CONNECTION_STATUS.UNKNOWN,
+    scanID: CONNECTION_STATUS.UNKNOWN,
+    database: CONNECTION_STATUS.UNKNOWN,
+    seq: CONNECTION_STATUS.UNKNOWN,
+    lastUpdated: null
+  };
+  
+  // Check status every 30 seconds
+  this.checkInterval = 30000;
+  this.intervalId = null;
+}
   
   /**
    * Start connection monitoring

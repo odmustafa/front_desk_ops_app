@@ -8,18 +8,18 @@ class ScanIDController {
   }
 
   registerIpcHandlers() {
-    this.ipcMain.handle('scanid:process', async (event, scanData) => {
-      this.logger.debug('Processing Scan-ID data', { scanData });
+    this.ipcMain.handle('scanid:process', async (event) => {
+      this.logger.debug('Processing Scan-ID data');
       try {
-        const result = await this.scanIDService.processScanData(scanData);
-        return { success: true, data: result };
+        await this.scanIDService.processScanData();
+        return { success: true };
       } catch (error) {
         this.logger.error('Error processing Scan-ID data', { error: error.message });
         return { success: false, error: error.message };
       }
     });
     // Handler: scan-id (legacy CSV parsing)
-    this.ipcMain.handle('scan-id', async (event, scanData) => {
+    this.ipcMain.handle('scan-id', async (event) => {
       this.logger.debug('Processing ID scan data');
       // Implementation for legacy CSV scan-id logic should go here or be refactored into a service.
       return { success: false, error: 'Legacy scan-id handler not yet refactored.' };

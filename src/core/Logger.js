@@ -5,7 +5,7 @@
  *
  * Usage:
  *   const logger = require('./Logger');
- *   const log = logger.createLogger('MyClass');
+ *   logger.createLogger('MyClass');
  *   log.info('message', { key: value });
  *
  * All logs go to both the console and Seq (if configured in settings).

@@ -1,3 +1,4 @@
+/* global window, document, localStorage, bootstrap, initializeConnectionStatus, loadStaffData */
 /**
  * Front Desk Ops Application - Main Script
  * Handles core application functionality and navigation
@@ -28,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Application State
 const LoggerService = require('../services/LoggerService');
-const logger = new LoggerService('AppScript');
+const logger = new LoggerService('app.js');
 const appState = {
   currentPage: 'dashboard',
   settings: {
@@ -59,10 +60,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // Direct event listener for Check-In tab
   const checkInLink = document.getElementById('checkin-nav-link');
   if (checkInLink) {
-    console.log('Found Check-In link, adding direct event listener');
+    logger.info('Found Check-In link, adding direct event listener', { ritual: 'Check-In', boundary: 'nav', context: 'navigation-link' });
     checkInLink.addEventListener('click', (e) => {
       e.preventDefault();
-      console.log('Check-In tab clicked directly');
+      logger.info('Check-In tab clicked directly', { ritual: 'Check-In', boundary: 'tab', context: 'tab-click' });
       
       // Hide all content pages
       document.querySelectorAll('.content-page').forEach(page => {
@@ -72,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Show Check-In page
       const checkInPage = document.getElementById('checkin');
       if (checkInPage) {
-        console.log('Found Check-In page, activating');
+        logger.info('Found Check-In page, activating', { ritual: 'Check-In', boundary: 'page-activation' });
         checkInPage.classList.add('active');
         
         // Initialize check-in if available
@@ -80,7 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
           window.initCheckIn();
         }
       } else {
-        console.error('Check-In page not found');
+        logger.error('Check-In page not found', { ritual: 'Check-In', boundary: 'page-activation' });
       }
       
       // Update nav links
@@ -90,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
       checkInLink.classList.add('active');
     });
   } else {
-    console.error('Check-In link not found');
+    logger.error('Check-In link not found', { ritual: 'Check-In', boundary: 'nav', context: 'navigation-link' });
   }
   
   // Set up navigation
@@ -145,7 +146,7 @@ function saveSettings() {
   localStorage.setItem('frontDeskOpsSettings', JSON.stringify(appState.settings));
   logger.info('Settings saved', { settings: appState.settings });
   
-  console.log('Settings saved successfully!');
+  logger.info('Settings saved successfully!', { context: 'settings' });
   showAlert('Success', 'Settings saved successfully!');
 }
 
@@ -153,17 +154,17 @@ function saveSettings() {
  * Set up navigation event listeners
  */
 function setupNavigation() {
-  console.log('Setting up navigation, found links:', navLinks.length);
+  logger.info('Setting up navigation, found links:', { navLinks: navLinks.length, context: 'navigation' });
   
   // Add click event listeners to navigation links
   navLinks.forEach(link => {
     const pageName = link.getAttribute('data-page');
-    console.log(`Setting up listener for ${pageName}`);
+    logger.info(`Setting up listener for ${pageName}`, { pageName, context: 'navigation' });
     
     link.addEventListener('click', (e) => {
       e.preventDefault();
       const pageName = link.getAttribute('data-page');
-      console.log(`Navigation link clicked: ${pageName}`);
+      logger.info(`Navigation link clicked: ${pageName}`, { pageName, context: 'navigation' });
       navigateToPage(pageName);
     });
   });
@@ -174,18 +175,18 @@ function setupNavigation() {
  * @param {string} pageName - The name of the page to navigate to
  */
 function navigateToPage(pageName) {
-  console.log(`Navigating to page: ${pageName}`);
+  logger.info(`Navigating to page: ${pageName}`, { pageName, context: 'navigation' });
   
   // Update current page in app state
   appState.currentPage = pageName;
   
   // Update active nav link
-  console.log(`Updating nav links for ${pageName}, total links: ${navLinks.length}`);
+  logger.info(`Updating nav links for ${pageName}, total links: ${navLinks.length}`, { pageName, navLinks: navLinks.length, context: 'navigation' });
   navLinks.forEach(link => {
     const linkPage = link.getAttribute('data-page');
-    console.log(`Checking nav link: ${linkPage}`);
+    logger.info(`Checking nav link: ${linkPage}`, { linkPage, context: 'navigation' });
     if (linkPage === pageName) {
-      console.log(`Setting ${linkPage} as active`);
+      logger.info(`Setting ${linkPage} as active`, { linkPage, context: 'navigation' });
       link.classList.add('active');
     } else {
       link.classList.remove('active');
@@ -194,15 +195,15 @@ function navigateToPage(pageName) {
   
   // Use the ID that matches the page name
   const pageId = pageName;
-  console.log(`Looking for content page with ID: ${pageId}`);
+  logger.info(`Looking for content page with ID: ${pageId}`, { pageId, context: 'navigation' });
   
   // Show selected page, hide others
-  console.log(`Total content pages found: ${contentPages.length}`);
+  logger.info(`Total content pages found: ${contentPages.length}`, { contentPages: contentPages.length, context: 'navigation' });
   let pageFound = false;
   contentPages.forEach(page => {
-    console.log(`Checking page: ${page.id}`);
+    logger.info(`Checking page: ${page.id}`, { pageId: page.id, context: 'navigation' });
     if (page.id === pageId) {
-      console.log(`Activating page: ${pageId}`);
+      logger.info(`Activating page: ${pageId}`, { pageId, context: 'navigation' });
       page.classList.add('active');
       pageFound = true;
       logger.info(`Activating page: ${pageId}`);
@@ -212,7 +213,7 @@ function navigateToPage(pageName) {
   });
   
   if (!pageFound) {
-    console.error(`Page not found: ${pageId}`);
+    logger.error(`Page not found: ${pageId}`, { pageId, context: 'navigation' });
   }
   
   // Perform any page-specific initialization
@@ -225,7 +226,7 @@ function navigateToPage(pageName) {
       break;
     case 'fuck':
       // The fuck.js script handles initialization
-      console.log('FUCK tab selected');
+      logger.info('FUCK tab selected', { context: 'navigation', note: 'debug marker' });
       break;
     case 'staff':
       loadStaffData();

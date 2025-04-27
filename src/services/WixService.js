@@ -3,6 +3,8 @@
  * Handles integration with Wix API for member management
  */
 const axios = require('axios');
+const path = require('path');
+const fs = require('fs');
 const Logger = require('../core/Logger');
 const Settings = require('../core/Settings');
 
@@ -35,7 +37,6 @@ class WixService {
         wixAccountId: ''
       };
       
-      // Try to load from config file
       const configPath = path.join(__dirname, '..', 'config', 'settings.json');
       
       if (fs.existsSync(configPath)) {
@@ -77,21 +78,21 @@ class WixService {
       // Try direct API key authentication first
       const result = await this.authenticateWithApiKey();
       if (result) {
-        this.logger.info('Authenticated with Wix API using API key');
+        log.info('Authenticated with Wix API using API key');
         return true;
       }
       
       // Try OAuth token endpoint next
       const oauthResult = await this.authenticateWithOAuth();
       if (oauthResult) {
-        this.logger.info('Authenticated with Wix API using OAuth');
+        log.info('Authenticated with Wix API using OAuth');
         return true;
       }
       
       // Try bearer token authentication
       const bearerResult = await this.authenticateWithBearerToken();
       if (bearerResult) {
-        this.logger.info('Authenticated with Wix API using bearer token');
+        log.info('Authenticated with Wix API using bearer token');
         return true;
       }
       
@@ -112,11 +113,10 @@ class WixService {
    */
   async authenticateWithApiKey() {
     try {
-      const settings = this.settings.getSettings();
-      const apiKey = settings.wixApiKey;
+      const apiKey = this.settings.wixApiKey;
       
       if (!apiKey) {
-        this.logger.warn('No API key configured');
+        log.warn('No API key configured');
         return false;
       }
       
@@ -126,7 +126,7 @@ class WixService {
       // Wix API expects the API key as a Bearer token
       const headers = {
         'Authorization': apiKey.startsWith('Bearer ') ? apiKey : `Bearer ${apiKey}`,
-        'wix-site-id': siteId,
+        'wix-site-id': this.settings.wixSiteId,
         'Content-Type': 'application/json'
       };
       
@@ -312,8 +312,8 @@ class WixService {
       // Create headers
       const headers = {
         'Authorization': this.token.startsWith('Bearer ') ? this.token : `Bearer ${this.token}`,
-        'wix-site-id': settings.wixSiteId,
-        'wix-account-id': settings.wixAccountId,
+        'wix-site-id': this.settings.wixSiteId,
+        'wix-account-id': this.settings.wixAccountId,
         'Content-Type': 'application/json'
       };
       
@@ -369,8 +369,8 @@ class WixService {
       // Create headers
       const headers = {
         'Authorization': this.token.startsWith('Bearer ') ? this.token : `Bearer ${this.token}`,
-        'wix-site-id': settings.wixSiteId,
-        'wix-account-id': settings.wixAccountId,
+        'wix-site-id': this.settings.wixSiteId,
+        'wix-account-id': this.settings.wixAccountId,
         'Content-Type': 'application/json'
       };
       
@@ -427,8 +427,7 @@ class WixService {
         return { 
           success: false, 
           message: 'Authentication failed',
-          details: 'Could not authenticate with any of the provided credentials',
-          apiReachable
+          details: 'Could not authenticate with any of the provided credentials'
         };
       }
       

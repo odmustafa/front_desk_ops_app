@@ -1,7 +1,13 @@
+/* global window, document, setTimeout */
 /**
  * Front Desk Ops Application - Check-In Module
  * Handles member check-in, ID scanning, and membership verification
  */
+
+// Simple logger stub for ESLint
+const LoggerService = require('../services/LoggerService');
+const logger = new LoggerService('check-in.js');
+
 
 // DOM Elements
 const scanIdBtn = document.getElementById('scan-id-btn');
@@ -459,18 +465,15 @@ function handleCheckIn() {
  */
 function formatDate(dateString) {
   if (!dateString || dateString === 'N/A') return 'N/A';
-  
   try {
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return dateString; // Invalid date
-    
     const month = date.getMonth() + 1;
     const day = date.getDate();
     const year = date.getFullYear();
-    
     return `${month.toString().padStart(2, '0')}/${day.toString().padStart(2, '0')}/${year}`;
   } catch (error) {
-    console.error('Error formatting date:', error);
+    logger.error('Error formatting date:', { error });
     return dateString;
   }
 }
@@ -519,16 +522,4 @@ function resetCheckInForm() {
   // Reset button visibility
   beginOnboardingBtn.style.display = 'inline-block';
   checkInBtn.style.display = 'inline-block';
-}
-
-/**
- * Format a date string to a more readable format
- * @param {string} dateString - The date string to format (YYYY-MM-DD)
- * @returns {string} - The formatted date string (MM/DD/YYYY)
- */
-function formatDate(dateString) {
-  if (!dateString || dateString === 'N/A') return 'N/A';
-  
-  const date = new Date(dateString);
-  return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
 }

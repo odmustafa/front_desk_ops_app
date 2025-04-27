@@ -57,7 +57,7 @@ class WixController {
     this.ipcMain.handle('wix:testConnection', async () => {
       try {
         const result = await this.wixService.testConnection();
-        const connected = result && result.success === true;
+        result && result.success === true;
         return { success: true, connected: result };
       } catch (error) {
         this.logger.error('Error testing Wix connection:', error);

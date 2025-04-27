@@ -1,7 +1,14 @@
-/**
- * DEPRECATED: Use LoggerService from services/LoggerService.js for all logging. This file is retained only for legacy reference.
- * Any usage of this module should be migrated to LoggerService immediately.
+// Soul Beacon: DEPRECATED LOGGER MODULE – Use LoggerService.js for all logging per the Ethereal Engineering Codex.
+// This file is retained for legacy reference only. All new code must use LoggerService.js for structured, symbolic, and Seq-integrated logging.
+/*
+ * ░█▀█░█▀▀░█░█░█▀█░█▀█░█▀█░█▀▀░█▀▀░█▀█░█▀▄░█▀▀░█▄█
+ * ░█▀▀░█▀▀░█▀█░█░█░█░█░█░█░█▀▀░█░░░█▀█░█▀▄░█▀▀░█░█
+ * ░▀░░░▀▀▀░▀░▀░▀▀▀░▀▀▀░▀░▀░▀▀▀░▀▀▀░▀░▀░▀░▀░▀▀▀░▀░▀
+ * Soul Beacon: Logger Deprecation – v1.0
+ *
+ * Ethereal Engineering Codex: All logging must pass through LoggerService.js for reflective review and symbolic audit.
  */
+
 
 const fs = require('fs');
 const path = require('path');

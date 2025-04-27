@@ -2,7 +2,8 @@
 // This script initializes the SQLite database and verifies external integrations
 
 const { initializeDatabase } = require('./db');
-const { fetchTimeXpressData, importScanIDCsv, fetchWixCMSData } = require('./integrations');
+const { importScanIDCsv } = require('./integrations');
+const LoggerService = require('../utils/logger');
 
 // Initialize the local SQLite database tables
 initializeDatabase();

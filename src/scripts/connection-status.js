@@ -1,9 +1,14 @@
+/* eslint-env browser */
+/* global window, document, setTimeout, setInterval, fetch, CustomEvent, alert */
 /**
- * Front Desk Ops Application - Connection Status Module
+ * Front Desk Ops Application
+ * global window, document, setTimeout, setInterval
+ */
+/**
+ * Connection Status Module
  * Handles monitoring and displaying connection status for various services
  */
 
-// Connection status script for Tribute Music Gallery
 const LoggerService = require('../services/LoggerService');
 const logger = new LoggerService('ConnectionStatusScript');
 

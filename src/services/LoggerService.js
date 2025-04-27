@@ -1,50 +1,32 @@
+// Soul Beacon: This file is the ritual audit anchor for all system logging per the Ethereal Engineering Codex.
+// All log events—material and symbolic—must pass through this structured logger. Maintain clarity, safety, and ethical alignment at all times.
+/*
+ * ░█▀█░█▀▀░█░█░█▀█░█▀█░█▀█░█▀▀░█▀▀░█▀█░█▀▄░█▀▀░█▄█
+ * ░█▀▀░█▀▀░█▀█░█░█░█░█░█░█░█▀▀░█░░░█▀█░█▀▄░█▀▀░█░█
+ * ░▀░░░▀▀▀░▀░▀░▀▀▀░▀▀▀░▀░▀░▀▀▀░▀▀▀░▀░▀░▀░▀░▀▀▀░▀░▀
+ * Soul Beacon: Logging Ritual Integrity – v1.0
+ *
+ * Ethereal Engineering Codex: All logging herein is subject to reflective review and symbolic audit. Maintain clarity, safety, and ethical alignment at all times.
+ */
+
 // LoggerService.js
 // Centralized logging for the Tribute Front Desk Ops App (Winston version)
 
 const { createLogger, format, transports } = require('winston');
-const SeqTransport = require('winston-seq');
+const { SeqTransport } = require('@datalust/winston-seq');
 const os = require('os');
-const path = require('path');
-const fs = require('fs');
 
-// Read app version and name from package.json
-let appVersion = 'unknown';
-let appName = 'FrontDeskOpsApp';
-try {
-  const pkgPath = path.join(__dirname, '../../package.json');
-  if (fs.existsSync(pkgPath)) {
-    const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
-    appVersion = pkg.version || 'unknown';
-    appName = pkg.name || 'FrontDeskOpsApp';
-  }
-} catch (err) {}
-
-const machineName = os.hostname();
-const platform = process.platform;
-const appPath = process.cwd();
-const electronVersion = process.versions.electron || 'n/a';
-const nodeVersion = process.versions.node || process.version || 'n/a';
-const osVersion = os.release();
+// App and environment metadata
+const appName = 'FrontDeskOpsApp';
 const environment = process.env.NODE_ENV || 'Development';
-const processId = process.pid;
+const machineName = os.hostname();
 const environmentUserName = process.env.USERNAME || process.env.USER || '<Unknown>';
 
-// Load Seq logging config from seq-logging.json
-let seqSettings = {
-  SeqLoggingEnabled: false,
-  SeqUrl: 'http://localhost:5341',
-  SeqApiKey: '',
-  SeqMinLogLevel: 'debug',
-  Application: appName,
-};
-try {
-  const seqConfigPath = path.join(__dirname, '../config/seq-logging.json');
-  if (fs.existsSync(seqConfigPath)) {
-    const raw = fs.readFileSync(seqConfigPath, 'utf8');
-    const parsed = JSON.parse(raw);
-    seqSettings = { ...seqSettings, ...parsed };
-  }
-} catch (err) {}
+// Seq configuration (prefer env vars, fallback to defaults)
+const seqUrl = process.env.SEQ_URL || 'https://tributeseq.azurewebsites.net';
+const seqApiKey = process.env.SEQ_API_KEY || '';
+const seqEnabled = process.env.SEQ_LOGGING_ENABLED === 'true' || true; // Default enabled
+const seqMinLevel = process.env.SEQ_MIN_LOG_LEVEL || 'debug';
 
 // Winston format for PascalCase field transformation
 function toPascalCase(str) {
@@ -124,30 +106,35 @@ const loggerTransports = [
   new transports.Console({
     level: 'silly',
     format: format.combine(
-      format.colorize(),
-      format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSS' }),
-      enrichFormat(),
-      consoleFormat
+      format.colorize({ all: true }),
+      format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+      format.printf(({ timestamp, level, message, ...meta }) => {
+        const source = meta.Context || meta.SourceContext || 'App';
+        const stack = meta.stack ? `\n${meta.stack}` : '';
+        return `[${timestamp} ${level}][${source}]: ${message}${stack}`;
+      })
     )
   })
 ];
 
-if (seqSettings.SeqLoggingEnabled) {
+if (seqEnabled) {
+  console.log(`[LoggerService] Seq logging ENABLED: ${seqUrl} (min level: ${seqMinLevel})`);
   loggerTransports.push(new SeqTransport({
-    serverUrl: seqSettings.SeqUrl,
-    apiKey: seqSettings.SeqApiKey,
-    level: seqSettings.SeqMinLogLevel || 'debug',
-    onError: e => console.error('Seq logger error:', e),
-    format: format.combine(
-      format.timestamp(),
-      enrichFormat()
-    )
+    serverUrl: seqUrl,
+    apiKey: seqApiKey,
+    level: seqMinLevel,
+    onError: e => process.stderr.write(`Seq logger error: ${e}\n`),
+    handleExceptions: true,
+    handleRejections: true
   }));
+} else {
+  console.log('[LoggerService] Seq logging DISABLED');
 }
 
 const winstonLogger = createLogger({
   level: 'silly',
-  transports: loggerTransports
+  transports: loggerTransports,
+  exitOnError: false
 });
 
 class LoggerService {

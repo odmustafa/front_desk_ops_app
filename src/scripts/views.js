@@ -1,3 +1,5 @@
+/* eslint-env browser */
+/* global window, document, setTimeout, setInterval, fetch, CustomEvent, alert */
 // scripts/views.js
 // SPA dynamic loader for Tribute Front Desk Ops
 

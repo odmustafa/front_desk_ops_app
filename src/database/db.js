@@ -6,7 +6,7 @@ const Database = require('better-sqlite3');
 const fs = require('fs');
 const LoggerService = require('../utils/logger');
 const electron = require('electron');
-const app = electron.app || electron.remote.app;
+electron.app || electron.remote.app;
 
 // Ensure data directory exists
 const dataDir = path.join(__dirname, '../../data');
@@ -203,7 +203,7 @@ function cacheMember(member) {
   try {
     // Validate and sanitize input
     if (!member || typeof member !== 'object') {
-      logger.error('Invalid member object provided to cacheMember', { member });
+      LoggerService.error('Invalid member object provided to cacheMember', { member });
       return { success: false, error: 'Invalid member object' };
     }
     // Defensive destructuring and fallback values
@@ -216,17 +216,17 @@ function cacheMember(member) {
     const expiry = member.membershipExpiry || member.membership_expiry || '';
 
     if (!wixId) {
-      logger.error('Missing wixId for member in cacheMember', { member });
+      LoggerService.error('Missing wixId for member in cacheMember', { member });
       return { success: false, error: 'Missing wixId for member' };
     }
 
-    logger.debug('Caching member in local database', { wixId });
+    LoggerService.debug('Caching member in local database', { wixId });
     const stmt = db.prepare(`INSERT OR REPLACE INTO members (wix_id, first_name, last_name, email, phone, membership_status, membership_expiry, last_sync) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`);
     stmt.run(wixId, firstName, lastName, email, phone, status, expiry);
-    logger.info('Member cached successfully', { wixId });
+    LoggerService.info('Member cached successfully', { wixId });
     return { success: true };
   } catch (error) {
-    logger.error('Error caching member:', { error: error.message, stack: error.stack, member });
+    LoggerService.error('Error caching member:', { error: error.message, stack: error.stack, member });
     return { success: false, error: error.message };
   }
 }

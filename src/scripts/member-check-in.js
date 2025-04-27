@@ -1,3 +1,5 @@
+/* eslint-env browser */
+/* global window, document, setTimeout, setInterval, fetch, CustomEvent, alert */
 /**
  * Member Check-In Module
  * Handles member check-in functionality using Wix integration
