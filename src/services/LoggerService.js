@@ -56,64 +56,41 @@ function getCallerFile() {
   return 'UnknownFile';
 }
 
-// Winston format to enrich log info with C#-style fields
-const enrichFormat = format((info, opts) => {
-  // Prefer explicit context, then info.SourceContext, then fail-safe
-  let sourceContext = info.Context || info.SourceContext;
-  if (!sourceContext && opts && opts.context) sourceContext = opts.context;
-  if (!sourceContext) {
-    sourceContext = getCallerFile();
-    info.FailSafeSourceContext = true;
-  }
 
-  // Attach all enrichers
-  Object.assign(info, {
-    Application: seqSettings.Application || appName,
-    AssemblyInformationalVersion: appVersion,
-    EnvironmentName: environment,
-    EnvironmentUserName: environmentUserName,
-    MachineName: machineName,
-    MemoryUsage: process.memoryUsage().rss,
-    ProcessId: processId,
-    ProcessName: process.title,
-    SourceContext: sourceContext,
-    ThreadId: 1,
-  });
-  // PascalCase all fields (except message/timestamp/level for Winston/Seq compatibility)
-  const stdFields = ['level','message','timestamp','stack'];
-  const orig = { ...info };
-  for (const key in orig) {
-    if (!stdFields.includes(key)) {
-      const pascal = toPascalCase(key);
-      if (pascal !== key) {
-        info[pascal] = orig[key];
-        delete info[key];
-      }
-    }
-  }
+const enrichFormat = format((info) => {
+  info.Application = appName;
+  info.AssemblyInformationalVersion = '1.0.0'; // Optionally load from package.json
+  info.EnvironmentName = environment;
+  info.EnvironmentUserName = environmentUserName;
+  info.MachineName = machineName;
+  info.MemoryUsage = process.memoryUsage().rss;
+  info.ProcessId = process.pid;
+  info.ProcessName = process.title;
+  info.SourceContext = info.Context || info.SourceContext || 'App';
+  info.ThreadId = 1;
   return info;
 });
 
-// Console output format to match Serilog template
-const consoleFormat = format.printf(({ timestamp, level, message, SourceContext, stack }) => {
-  const levelU3 = level.toUpperCase().padEnd(3).slice(0, 3);
-  const source = SourceContext || 'App';
-  const exception = stack ? `\n${stack}` : '';
-  return `[${timestamp} ${levelU3}][${source}]: ${message}${exception}`;
-});
+const consoleFormat = format.combine(
+  enrichFormat(),
+  format.colorize({ all: true }),
+  format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+  format.printf(({ timestamp, level, message, ...meta }) => {
+    const source = meta.SourceContext || 'App';
+    const stack = meta.stack ? `\n${meta.stack}` : '';
+    return `[${timestamp} ${level}][${source}]: ${message}${stack}`;
+  })
+);
+
+const seqFormat = format.combine(
+  enrichFormat(),
+  format.timestamp()
+);
 
 const loggerTransports = [
   new transports.Console({
     level: 'silly',
-    format: format.combine(
-      format.colorize({ all: true }),
-      format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-      format.printf(({ timestamp, level, message, ...meta }) => {
-        const source = meta.Context || meta.SourceContext || 'App';
-        const stack = meta.stack ? `\n${meta.stack}` : '';
-        return `[${timestamp} ${level}][${source}]: ${message}${stack}`;
-      })
-    )
+    format: consoleFormat
   })
 ];
 
@@ -125,7 +102,8 @@ if (seqEnabled) {
     level: seqMinLevel,
     onError: e => process.stderr.write(`Seq logger error: ${e}\n`),
     handleExceptions: true,
-    handleRejections: true
+    handleRejections: true,
+    format: seqFormat
   }));
 } else {
   console.log('[LoggerService] Seq logging DISABLED');
